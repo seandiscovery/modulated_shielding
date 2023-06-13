@@ -9,6 +9,10 @@
 #d:Ge/World/HLY      = 5 cm
 #d:Ge/World/HLZ      = 5 cm
 
+## Sean edits 06/13/2023 ##
+
+# Ts/UseQt = "True" # activate GUI
+
 ##### Define Tungsten #####
 sv:Ma/BlockTungsten/Components = 1 "Tungsten" 
 uv:Ma/BlockTungsten/Fractions  = 1 1.0
