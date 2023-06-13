@@ -1,0 +1,35 @@
+### Initial TOPAS testing - cube +/- single source in uniform medium
+### Author: Sean Mullane
+
+# Geometry - simple cube
+s:Ge/Test/Parent = "World"
+s:Ge/Test/Type = "TsBox"
+s:Ge/Test/Material = "Titanium"
+s:Ge/Test/DrawingStyle = "Solid"
+b:Ge/Test/PrintInformation = "True"
+
+d:Ge/Test/HLX = 1.0 m
+d:Ge/Test/HLY = 1.0 m
+d:Ge/Test/HLZ = 1.0 m
+
+d:Ge/Test/TransX = 0.0 m
+d:Ge/Test/TransY = 0.0 m
+d:Ge/Test/TransZ = 0.0 m
+d:Ge/Test/RotX = 0.0 deg
+d:Ge/Test/RotY = 0.0 deg
+d:Ge/Test/RotZ = 0.0 deg
+
+# Particle source
+# Inserted after basic functionality established
+
+# Physics
+# Inserted after basic functionality estbalished
+
+# Scoring
+# Inserted after basic functionality established
+
+# GUI
+Ts/UseQt = "True"
+s:Gr/Graphic/Type = "OpenGL"
+b:Gr/Graphic/IncludeGeometry = "True"
+b:Gr/Graphic/IncludeTrajectories = "False"
