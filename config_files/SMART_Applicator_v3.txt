@@ -1,0 +1,615 @@
+#                                                          #
+#              SMART Applicator for HDR                    #
+#	       Created - July 2022		  	    #
+#	       Author: Emily Draeger			    #
+#                                                          #
+
+
+##### Define Tungsten #####
+sv:Ma/WireTungsten/Components = 1 "Tungsten" 
+uv:Ma/WireTungsten/Fractions  = 1 1.0
+d:Ma/WireTungsten/Density     = 19.30 g/cm3
+
+sv:Ma/WireCopper/Components = 1 "Copper" 
+uv:Ma/WireCopper/Fractions  = 1 1.0
+d:Ma/WireCopper/Density     = 8.96 g/cm3
+
+sv:Ma/WirePlatinum/Components = 1 "Platinum" 
+uv:Ma/WirePlatinum/Fractions  = 1 1.0
+d:Ma/WirePlatinum/Density     = 21.45 g/cm3
+
+sv:Ma/WireSteel/Components = 8 "Carbon" "Chromium" "Iron" "Manganese" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/WireSteel/Fractions  = 8 0.0008 0.20 0.66345 0.02 0.105 0.00045 0.01 0.0003
+d:Ma/WireSteel/Density     = 5.60 g/cm3
+
+
+##### TANDEM GEOMETRY #####
+s:Ge/SMARTApplicator/Type   = "Group"
+s:Ge/SMARTApplicator/Parent = "World"
+
+iv:Gr/Color/TandemColor  = 4 255 255 255 80
+
+s:Ge/TandemGeometry/Type              = "Group"
+s:Ge/TandemGeometry/Parent            = "SMARTApplicator"
+b:Ge/TandemGeometry/IsParallel        = "True"
+s:Ge/TandemGeometry/ParallelWorldName = "TandemWorld"
+
+s:Ge/Tandem/Type              = "TsCylinder"
+s:Ge/Tandem/Parent            = "TandemGeometry"
+s:Ge/Tandem/Material          = "Titanium"
+d:Ge/Tandem/RMin              = 0.6 mm
+d:Ge/Tandem/RMax              = 3.0 mm
+d:Ge/Tandem/HL                = 25 mm
+d:Ge/Tandem/SPhi              = 0. deg
+d:Ge/Tandem/DPhi              = 360. deg
+s:Ge/Tandem/Color             = "TandemColor"
+s:Ge/Tandem/DrawingStyle      = "Solid"
+b:Ge/Tandem/IsParallel        = "True"
+s:Ge/Tandem/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/TandemAirChannel/Type              = "TsCylinder"
+s:Ge/TandemAirChannel/Parent            = "TandemGeometry"
+s:Ge/TandemAirChannel/Material          = "Air"
+d:Ge/TandemAirChannel/RMin              = 0.0 mm
+d:Ge/TandemAirChannel/RMax              = Ge/Tandem/RMin mm
+d:Ge/TandemAirChannel/HL                = Ge/Tandem/HL mm
+d:Ge/TandemAirChannel/SPhi              = 0. deg
+d:Ge/TandemAirChannel/DPhi              = 360. deg
+s:Ge/TandemAirChannel/Color             = "black"
+s:Ge/TandemAirChannel/DrawingStyle      = "Solid"
+b:Ge/TandemAirChannel/IsParallel        = "True"
+s:Ge/TandemAirChannel/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/TandemCap/Type         = "TsSphere"
+s:Ge/TandemCap/Material     = "Titanium"
+s:Ge/TandemCap/Parent       = "TandemGeometry"
+d:Ge/TandemCap/RMin         = 0 mm
+d:Ge/TandemCap/RMax         = Ge/Tandem/RMax mm
+d:Ge/TandemCap/HL           = 1.5 mm
+d:Ge/TandemCap/TransZ      = -25 mm
+d:Ge/TandemCap/RotX        = 90 deg
+d:Ge/TandemCap/RotY        = 0 deg
+d:Ge/TandemCap/RotZ        = 0 deg
+d:Ge/TandemCap/SPhi        = 0 deg
+d:Ge/TandemCap/DPhi        = 180 deg
+d:Ge/TandemCap/STheta      = 0 deg
+d:Ge/TandemCap/DTheta      = 180 deg
+s:Ge/TandemCap/Color        = "TandemColor"
+s:Ge/TandemCap/DrawingStyle = "Solid"
+b:Ge/TandemCap/IsParallel        = "True"
+s:Ge/TandemCap/ParallelWorldName = "TandemWorld"
+
+
+##### CHANNEL GEOMETRY ####
+#s:Ge/ChannelGeometry/Type              = "Group"
+#s:Ge/ChannelGeometry/Parent            = "SMARTApplicator"
+#b:Ge/ChannelGeometry/IsParallel        = "True"
+#s:Ge/ChannelGeometry/ParallelWorldName = "ChannelWorld"
+
+
+s:Ge/Channel1/Type              = "TsCylinder"
+s:Ge/Channel1/Parent            = "Tandem"
+s:Ge/Channel1/Material          = "Air"
+d:Ge/Channel1/RMin              = 0.0 mm
+d:Ge/Channel1/RMax              = 1.0 mm
+d:Ge/Channel1/HL                = Ge/Tandem/HL mm
+d:Ge/Channel1/TransY            = 1.8 mm
+d:Ge/Channel1/SPhi              = 0. deg
+d:Ge/Channel1/DPhi              = 360. deg
+s:Ge/Channel1/Color             = "black"
+s:Ge/Channel1/DrawingStyle      = "Solid"
+b:Ge/Channel1/IsParallel        = "True"
+s:Ge/Channel1/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel2/Type              = "TsCylinder"
+s:Ge/Channel2/Parent            = "Tandem"
+s:Ge/Channel2/Material          = "Air"
+d:Ge/Channel2/RMin              = 0.0 mm
+d:Ge/Channel2/RMax              = 1.0 mm
+d:Ge/Channel2/HL                = Ge/Tandem/HL mm
+d:Ge/Channel2/TransY            = -1.8 mm
+d:Ge/Channel2/SPhi              = 0. deg
+d:Ge/Channel2/DPhi              = 360. deg
+s:Ge/Channel2/Color             = "black"
+s:Ge/Channel2/DrawingStyle      = "Solid"
+b:Ge/Channel2/IsParallel        = "True"
+s:Ge/Channel2/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel3/Type              = "TsCylinder"
+s:Ge/Channel3/Parent            = "Tandem"
+s:Ge/Channel3/Material          = "Air"
+d:Ge/Channel3/RMin              = 0.0 mm
+d:Ge/Channel3/RMax              = 0.35 mm
+d:Ge/Channel3/HL                = Ge/Tandem/HL mm
+d:Ge/Channel3/TransY            = 1.8 mm
+d:Ge/Channel3/TransX            = 1.55 mm
+d:Ge/Channel3/SPhi              = 0. deg
+d:Ge/Channel3/DPhi              = 360. deg
+s:Ge/Channel3/Color             = "black"
+s:Ge/Channel3/DrawingStyle      = "Solid"
+b:Ge/Channel3/IsParallel        = "True"
+s:Ge/Channel3/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel4/Type              = "TsCylinder"
+s:Ge/Channel4/Parent            = "Tandem"
+s:Ge/Channel4/Material          = "Air"
+d:Ge/Channel4/RMin              = 0.0 mm
+d:Ge/Channel4/RMax              = 0.35 mm
+d:Ge/Channel4/HL                = Ge/Tandem/HL mm
+d:Ge/Channel4/TransX            = 1.55 mm
+d:Ge/Channel4/TransY            = 0.9 mm
+d:Ge/Channel4/SPhi              = 0. deg
+d:Ge/Channel4/DPhi              = 360. deg
+s:Ge/Channel4/Color             = "black"
+s:Ge/Channel4/DrawingStyle      = "Solid"
+b:Ge/Channel4/IsParallel        = "True"
+s:Ge/Channel4/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel5/Type              = "TsCylinder"
+s:Ge/Channel5/Parent            = "Tandem"
+s:Ge/Channel5/Material          = "Air"
+d:Ge/Channel5/RMin              = 0.0 mm
+d:Ge/Channel5/RMax              = 0.35 mm
+d:Ge/Channel5/HL                = Ge/Tandem/HL mm
+d:Ge/Channel5/TransX            = 1.55 mm
+d:Ge/Channel5/TransY            = 0.0 mm
+d:Ge/Channel5/SPhi              = 0. deg
+d:Ge/Channel5/DPhi              = 360. deg
+s:Ge/Channel5/Color             = "black"
+s:Ge/Channel5/DrawingStyle      = "Solid"
+b:Ge/Channel5/IsParallel        = "True"
+s:Ge/Channel5/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel6/Type              = "TsCylinder"
+s:Ge/Channel6/Parent            = "Tandem"
+s:Ge/Channel6/Material          = "Air"
+d:Ge/Channel6/RMin              = 0.0 mm
+d:Ge/Channel6/RMax              = 0.35 mm
+d:Ge/Channel6/HL                = Ge/Tandem/HL mm
+d:Ge/Channel6/TransX            = 1.55 mm
+d:Ge/Channel6/TransY            = -0.9 mm
+d:Ge/Channel6/SPhi              = 0. deg
+d:Ge/Channel6/DPhi              = 360. deg
+s:Ge/Channel6/Color             = "black"
+s:Ge/Channel6/DrawingStyle      = "Solid"
+b:Ge/Channel6/IsParallel        = "True"
+s:Ge/Channel6/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel7/Type              = "TsCylinder"
+s:Ge/Channel7/Parent            = "Tandem"
+s:Ge/Channel7/Material          = "Air"
+d:Ge/Channel7/RMin              = 0.0 mm
+d:Ge/Channel7/RMax              = 0.35 mm
+d:Ge/Channel7/HL                = Ge/Tandem/HL mm
+d:Ge/Channel7/TransY            = -1.8 mm
+d:Ge/Channel7/TransX            = 1.55 mm
+d:Ge/Channel7/SPhi              = 0. deg
+d:Ge/Channel7/DPhi              = 360. deg
+s:Ge/Channel7/Color             = "black"
+s:Ge/Channel7/DrawingStyle      = "Solid"
+b:Ge/Channel7/IsParallel        = "True"
+s:Ge/Channel7/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel8/Type              = "TsCylinder"
+s:Ge/Channel8/Parent            = "Tandem"
+s:Ge/Channel8/Material          = "Air"
+d:Ge/Channel8/RMin              = 0.0 mm
+d:Ge/Channel8/RMax              = 0.35 mm
+d:Ge/Channel8/HL                = Ge/Tandem/HL mm
+d:Ge/Channel8/TransY            = 0.45 mm
+d:Ge/Channel8/TransX            = 2.4 mm
+d:Ge/Channel8/SPhi              = 0. deg
+d:Ge/Channel8/DPhi              = 360. deg
+s:Ge/Channel8/Color             = "black"
+s:Ge/Channel8/DrawingStyle      = "Solid"
+b:Ge/Channel8/IsParallel        = "True"
+s:Ge/Channel8/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel9/Type              = "TsCylinder"
+s:Ge/Channel9/Parent            = "Tandem"
+s:Ge/Channel9/Material          = "Air"
+d:Ge/Channel9/RMin              = 0.0 mm
+d:Ge/Channel9/RMax              = 0.35 mm
+d:Ge/Channel9/HL                = Ge/Tandem/HL mm
+d:Ge/Channel9/TransY            = -0.45 mm
+d:Ge/Channel9/TransX            = 2.4 mm
+d:Ge/Channel9/SPhi              = 0. deg
+d:Ge/Channel9/DPhi              = 360. deg
+s:Ge/Channel9/Color             = "black"
+s:Ge/Channel9/DrawingStyle      = "Solid"
+b:Ge/Channel9/IsParallel        = "True"
+s:Ge/Channel9/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel10/Type              = "TsCylinder"
+s:Ge/Channel10/Parent            = "Tandem"
+s:Ge/Channel10/Material          = "Air"
+d:Ge/Channel10/RMin              = 0.0 mm
+d:Ge/Channel10/RMax              = 0.35 mm
+d:Ge/Channel10/HL                = Ge/Tandem/HL mm
+d:Ge/Channel10/TransY            = 1.8 mm
+d:Ge/Channel10/TransX            = -1.55 mm
+d:Ge/Channel10/SPhi              = 0. deg
+d:Ge/Channel10/DPhi              = 360. deg
+s:Ge/Channel10/Color             = "black"
+s:Ge/Channel10/DrawingStyle      = "Solid"
+b:Ge/Channel10/IsParallel        = "True"
+s:Ge/Channel10/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel11/Type              = "TsCylinder"
+s:Ge/Channel11/Parent            = "Tandem"
+s:Ge/Channel11/Material          = "Air"
+d:Ge/Channel11/RMin              = 0.0 mm
+d:Ge/Channel11/RMax              = 0.35 mm
+d:Ge/Channel11/HL                = Ge/Tandem/HL mm
+d:Ge/Channel11/TransX            = -1.55 mm
+d:Ge/Channel11/TransY            = 0.9 mm
+d:Ge/Channel11/SPhi              = 0. deg
+d:Ge/Channel11/DPhi              = 360. deg
+s:Ge/Channel11/Color             = "black"
+s:Ge/Channel11/DrawingStyle      = "Solid"
+b:Ge/Channel11/IsParallel        = "True"
+s:Ge/Channel11/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel12/Type              = "TsCylinder"
+s:Ge/Channel12/Parent            = "Tandem"
+s:Ge/Channel12/Material          = "Air"
+d:Ge/Channel12/RMin              = 0.0 mm
+d:Ge/Channel12/RMax              = 0.35 mm
+d:Ge/Channel12/HL                = Ge/Tandem/HL mm
+d:Ge/Channel12/TransX            = -1.55 mm
+d:Ge/Channel12/TransY            = 0.0 mm
+d:Ge/Channel12/SPhi              = 0. deg
+d:Ge/Channel12/DPhi              = 360. deg
+s:Ge/Channel12/Color             = "black"
+s:Ge/Channel12/DrawingStyle      = "Solid"
+b:Ge/Channel12/IsParallel        = "True"
+s:Ge/Channel12/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel13/Type              = "TsCylinder"
+s:Ge/Channel13/Parent            = "Tandem"
+s:Ge/Channel13/Material          = "Air"
+d:Ge/Channel13/RMin              = 0.0 mm
+d:Ge/Channel13/RMax              = 0.35 mm
+d:Ge/Channel13/HL                = Ge/Tandem/HL mm
+d:Ge/Channel13/TransX            = -1.55 mm
+d:Ge/Channel13/TransY            = -0.9 mm
+d:Ge/Channel13/SPhi              = 0. deg
+d:Ge/Channel13/DPhi              = 360. deg
+s:Ge/Channel13/Color             = "black"
+s:Ge/Channel13/DrawingStyle      = "Solid"
+b:Ge/Channel13/IsParallel        = "True"
+s:Ge/Channel13/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel14/Type              = "TsCylinder"
+s:Ge/Channel14/Parent            = "Tandem"
+s:Ge/Channel14/Material          = "Air"
+d:Ge/Channel14/RMin              = 0.0 mm
+d:Ge/Channel14/RMax              = 0.35 mm
+d:Ge/Channel14/HL                = Ge/Tandem/HL mm
+d:Ge/Channel14/TransY            = -1.8 mm
+d:Ge/Channel14/TransX            = -1.55 mm
+d:Ge/Channel14/SPhi              = 0. deg
+d:Ge/Channel14/DPhi              = 360. deg
+s:Ge/Channel14/Color             = "black"
+s:Ge/Channel14/DrawingStyle      = "Solid"
+b:Ge/Channel14/IsParallel        = "True"
+s:Ge/Channel14/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel15/Type              = "TsCylinder"
+s:Ge/Channel15/Parent            = "Tandem"
+s:Ge/Channel15/Material          = "Air"
+d:Ge/Channel15/RMin              = 0.0 mm
+d:Ge/Channel15/RMax              = 0.35 mm
+d:Ge/Channel15/HL                = Ge/Tandem/HL mm
+d:Ge/Channel15/TransY            = 0.45 mm
+d:Ge/Channel15/TransX            = -2.4 mm
+d:Ge/Channel15/SPhi              = 0. deg
+d:Ge/Channel15/DPhi              = 360. deg
+s:Ge/Channel15/Color             = "black"
+s:Ge/Channel15/DrawingStyle      = "Solid"
+b:Ge/Channel15/IsParallel        = "True"
+s:Ge/Channel15/ParallelWorldName = "TandemWorld"
+
+
+s:Ge/Channel16/Type              = "TsCylinder"
+s:Ge/Channel16/Parent            = "Tandem"
+s:Ge/Channel16/Material          = "Air"
+d:Ge/Channel16/RMin              = 0.0 mm
+d:Ge/Channel16/RMax              = 0.35 mm
+d:Ge/Channel16/HL                = Ge/Tandem/HL mm
+d:Ge/Channel16/TransY            = -0.45 mm
+d:Ge/Channel16/TransX            = -2.4 mm
+d:Ge/Channel16/SPhi              = 0. deg
+d:Ge/Channel16/DPhi              = 360. deg
+s:Ge/Channel16/Color             = "black"
+s:Ge/Channel16/DrawingStyle      = "Solid"
+b:Ge/Channel16/IsParallel        = "True"
+s:Ge/Channel16/ParallelWorldName = "TandemWorld"
+
+
+##### SHIELDING WIRE GEOMETRY ####
+s:Ge/WireGeometry/Type              = "Group"
+s:Ge/WireGeometry/Parent            = "SMARTApplicator"
+b:Ge/WireGeometry/IsParallel        = "True"
+s:Ge/WireGeometry/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire1/Type              = "TsCylinder"
+s:Ge/Wire1/Parent            = "WireGeometry"
+s:Ge/Wire1/Material          = "WirePlatinum"
+d:Ge/Wire1/RMin              = 0.0 mm
+d:Ge/Wire1/RMax              = 0.75 mm
+d:Ge/Wire1/HL                = Ge/Tandem/HL mm
+d:Ge/Wire1/TransY            = Ge/Channel1/TransY mm
+d:Ge/Wire1/SPhi              = 0. deg
+d:Ge/Wire1/DPhi              = 360. deg
+s:Ge/Wire1/Color             = "White"
+s:Ge/Wire1/DrawingStyle      = "Solid"
+b:Ge/Wire1/IsParallel        = "True"
+s:Ge/Wire1/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire2/Type              = "TsCylinder"
+s:Ge/Wire2/Parent            = "WireGeometry"
+s:Ge/Wire2/Material          = "WirePlatinum"
+d:Ge/Wire2/RMin              = 0.0 mm
+d:Ge/Wire2/RMax              = 0.75 mm
+d:Ge/Wire2/HL                = Ge/Tandem/HL mm
+d:Ge/Wire2/TransY            = Ge/Channel2/TransY mm
+d:Ge/Wire2/SPhi              = 0. deg
+d:Ge/Wire2/DPhi              = 360. deg
+s:Ge/Wire2/Color             = "White"
+s:Ge/Wire2/DrawingStyle      = "Solid"
+b:Ge/Wire2/IsParallel        = "True"
+s:Ge/Wire2/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire3/Type              = "TsCylinder"
+s:Ge/Wire3/Parent            = "WireGeometry"
+s:Ge/Wire3/Material          = "Air"
+d:Ge/Wire3/RMin              = 0.0 mm
+d:Ge/Wire3/RMax              = 0.3 mm
+d:Ge/Wire3/HL                = Ge/Tandem/HL mm
+d:Ge/Wire3/TransY            = Ge/Channel3/TransY mm
+d:Ge/Wire3/TransX            = Ge/Channel3/TransX mm
+d:Ge/Wire3/SPhi              = 0. deg
+d:Ge/Wire3/DPhi              = 360. deg
+s:Ge/Wire3/Color             = "White"
+s:Ge/Wire3/DrawingStyle      = "Solid"
+b:Ge/Wire3/IsParallel        = "True"
+s:Ge/Wire3/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire4/Type              = "TsCylinder"
+s:Ge/Wire4/Parent            = "WireGeometry"
+s:Ge/Wire4/Material          = "Air"
+d:Ge/Wire4/RMin              = 0.0 mm
+d:Ge/Wire4/RMax              = 0.3 mm
+d:Ge/Wire4/HL                = Ge/Tandem/HL mm
+d:Ge/Wire4/TransX            = Ge/Channel4/TransX mm
+d:Ge/Wire4/TransY            = Ge/Channel4/TransY mm
+d:Ge/Wire4/SPhi              = 0. deg
+d:Ge/Wire4/DPhi              = 360. deg
+s:Ge/Wire4/Color             = "White"
+s:Ge/Wire4/DrawingStyle      = "Solid"
+b:Ge/Wire4/IsParallel        = "True"
+s:Ge/Wire4/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire5/Type              = "TsCylinder"
+s:Ge/Wire5/Parent            = "WireGeometry"
+s:Ge/Wire5/Material          = "Air"
+d:Ge/Wire5/RMin              = 0.0 mm
+d:Ge/Wire5/RMax              = 0.3 mm
+d:Ge/Wire5/HL                = Ge/Tandem/HL mm
+d:Ge/Wire5/TransX            = Ge/Channel5/TransX mm
+d:Ge/Wire5/TransY            = Ge/Channel5/TransY mm
+d:Ge/Wire5/SPhi              = 0. deg
+d:Ge/Wire5/DPhi              = 360. deg
+s:Ge/Wire5/Color             = "White"
+s:Ge/Wire5/DrawingStyle      = "Solid"
+b:Ge/Wire5/IsParallel        = "True"
+s:Ge/Wire5/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire6/Type              = "TsCylinder"
+s:Ge/Wire6/Parent            = "WireGeometry"
+s:Ge/Wire6/Material          = "Air"
+d:Ge/Wire6/RMin              = 0.0 mm
+d:Ge/Wire6/RMax              = 0.3 mm
+d:Ge/Wire6/HL                = Ge/Tandem/HL mm
+d:Ge/Wire6/TransX            = Ge/Channel6/TransX mm
+d:Ge/Wire6/TransY            = Ge/Channel6/TransY mm
+d:Ge/Wire6/SPhi              = 0. deg
+d:Ge/Wire6/DPhi              = 360. deg
+s:Ge/Wire6/Color             = "White"
+s:Ge/Wire6/DrawingStyle      = "Solid"
+b:Ge/Wire6/IsParallel        = "True"
+s:Ge/Wire6/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire7/Type              = "TsCylinder"
+s:Ge/Wire7/Parent            = "WireGeometry"
+s:Ge/Wire7/Material          = "Air"
+d:Ge/Wire7/RMin              = 0.0 mm
+d:Ge/Wire7/RMax              = 0.3 mm
+d:Ge/Wire7/HL                = Ge/Tandem/HL mm
+d:Ge/Wire7/TransX            = Ge/Channel7/TransX mm
+d:Ge/Wire7/TransY            = Ge/Channel7/TransY mm
+d:Ge/Wire7/SPhi              = 0. deg
+d:Ge/Wire7/DPhi              = 360. deg
+s:Ge/Wire7/Color             = "White"
+s:Ge/Wire7/DrawingStyle      = "Solid"
+b:Ge/Wire7/IsParallel        = "True"
+s:Ge/Wire7/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire8/Type              = "TsCylinder"
+s:Ge/Wire8/Parent            = "WireGeometry"
+s:Ge/Wire8/Material          = "Air"
+d:Ge/Wire8/RMin              = 0.0 mm
+d:Ge/Wire8/RMax              = 0.3 mm
+d:Ge/Wire8/HL                = Ge/Tandem/HL mm
+d:Ge/Wire8/TransX            = Ge/Channel8/TransX mm
+d:Ge/Wire8/TransY            = Ge/Channel8/TransY mm
+d:Ge/Wire8/SPhi              = 0. deg
+d:Ge/Wire8/DPhi              = 360. deg
+s:Ge/Wire8/Color             = "White"
+s:Ge/Wire8/DrawingStyle      = "Solid"
+b:Ge/Wire8/IsParallel        = "True"
+s:Ge/Wire8/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire9/Type              = "TsCylinder"
+s:Ge/Wire9/Parent            = "WireGeometry"
+s:Ge/Wire9/Material          = "Air"
+d:Ge/Wire9/RMin              = 0.0 mm
+d:Ge/Wire9/RMax              = 0.3 mm
+d:Ge/Wire9/HL                = Ge/Tandem/HL mm
+d:Ge/Wire9/TransX            = Ge/Channel9/TransX mm
+d:Ge/Wire9/TransY            = Ge/Channel9/TransY mm
+d:Ge/Wire9/SPhi              = 0. deg
+d:Ge/Wire9/DPhi              = 360. deg
+s:Ge/Wire9/Color             = "White"
+s:Ge/Wire9/DrawingStyle      = "Solid"
+b:Ge/Wire9/IsParallel        = "True"
+s:Ge/Wire9/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire10/Type              = "TsCylinder"
+s:Ge/Wire10/Parent            = "WireGeometry"
+s:Ge/Wire10/Material          = "WirePlatinum"
+d:Ge/Wire10/RMin              = 0.0 mm
+d:Ge/Wire10/RMax              = 0.3 mm
+d:Ge/Wire10/HL                = Ge/Tandem/HL mm
+d:Ge/Wire10/TransX            = Ge/Channel10/TransX mm
+d:Ge/Wire10/TransY            = Ge/Channel10/TransY mm
+d:Ge/Wire10/SPhi              = 0. deg
+d:Ge/Wire10/DPhi              = 360. deg
+s:Ge/Wire10/Color             = "White"
+s:Ge/Wire10/DrawingStyle      = "Solid"
+b:Ge/Wire10/IsParallel        = "True"
+s:Ge/Wire10/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire11/Type              = "TsCylinder"
+s:Ge/Wire11/Parent            = "WireGeometry"
+s:Ge/Wire11/Material          = "WirePlatinum"
+d:Ge/Wire11/RMin              = 0.0 mm
+d:Ge/Wire11/RMax              = 0.3 mm
+d:Ge/Wire11/HL                = Ge/Tandem/HL mm
+d:Ge/Wire11/TransX            = Ge/Channel11/TransX mm
+d:Ge/Wire11/TransY            = Ge/Channel11/TransY mm
+d:Ge/Wire11/SPhi              = 0. deg
+d:Ge/Wire11/DPhi              = 360. deg
+s:Ge/Wire11/Color             = "White"
+s:Ge/Wire11/DrawingStyle      = "Solid"
+b:Ge/Wire11/IsParallel        = "True"
+s:Ge/Wire11/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire12/Type              = "TsCylinder"
+s:Ge/Wire12/Parent            = "WireGeometry"
+s:Ge/Wire12/Material          = "WirePlatinum"
+d:Ge/Wire12/RMin              = 0.0 mm
+d:Ge/Wire12/RMax              = 0.3 mm
+d:Ge/Wire12/HL                = Ge/Tandem/HL mm
+d:Ge/Wire12/TransX            = Ge/Channel12/TransX mm
+d:Ge/Wire12/TransY            = Ge/Channel12/TransY mm
+d:Ge/Wire12/SPhi              = 0. deg
+d:Ge/Wire12/DPhi              = 360. deg
+s:Ge/Wire12/Color             = "White"
+s:Ge/Wire12/DrawingStyle      = "Solid"
+b:Ge/Wire12/IsParallel        = "True"
+s:Ge/Wire12/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire13/Type              = "TsCylinder"
+s:Ge/Wire13/Parent            = "WireGeometry"
+s:Ge/Wire13/Material          = "WirePlatinum"
+d:Ge/Wire13/RMin              = 0.0 mm
+d:Ge/Wire13/RMax              = 0.3 mm
+d:Ge/Wire13/HL                = Ge/Tandem/HL mm
+d:Ge/Wire13/TransX            = Ge/Channel13/TransX mm
+d:Ge/Wire13/TransY            = Ge/Channel13/TransY mm
+d:Ge/Wire13/SPhi              = 0. deg
+d:Ge/Wire13/DPhi              = 360. deg
+s:Ge/Wire13/Color             = "White"
+s:Ge/Wire13/DrawingStyle      = "Solid"
+b:Ge/Wire13/IsParallel        = "True"
+s:Ge/Wire13/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire14/Type              = "TsCylinder"
+s:Ge/Wire14/Parent            = "WireGeometry"
+s:Ge/Wire14/Material          = "WirePlatinum"
+d:Ge/Wire14/RMin              = 0.0 mm
+d:Ge/Wire14/RMax              = 0.3 mm
+d:Ge/Wire14/HL                = Ge/Tandem/HL mm
+d:Ge/Wire14/TransX            = Ge/Channel14/TransX mm
+d:Ge/Wire14/TransY            = Ge/Channel14/TransY mm
+d:Ge/Wire14/SPhi              = 0. deg
+d:Ge/Wire14/DPhi              = 360. deg
+s:Ge/Wire14/Color             = "White"
+s:Ge/Wire14/DrawingStyle      = "Solid"
+b:Ge/Wire14/IsParallel        = "True"
+s:Ge/Wire14/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire15/Type              = "TsCylinder"
+s:Ge/Wire15/Parent            = "WireGeometry"
+s:Ge/Wire15/Material          = "WirePlatinum"
+d:Ge/Wire15/RMin              = 0.0 mm
+d:Ge/Wire15/RMax              = 0.3 mm
+d:Ge/Wire15/HL                = Ge/Tandem/HL mm
+d:Ge/Wire15/TransX            = Ge/Channel15/TransX mm
+d:Ge/Wire15/TransY            = Ge/Channel15/TransY mm
+d:Ge/Wire15/SPhi              = 0. deg
+d:Ge/Wire15/DPhi              = 360. deg
+s:Ge/Wire15/Color             = "White"
+s:Ge/Wire15/DrawingStyle      = "Solid"
+b:Ge/Wire15/IsParallel        = "True"
+s:Ge/Wire15/ParallelWorldName = "WireWorld"
+
+
+s:Ge/Wire16/Type              = "TsCylinder"
+s:Ge/Wire16/Parent            = "WireGeometry"
+s:Ge/Wire16/Material          = "WirePlatinum"
+d:Ge/Wire16/RMin              = 0.0 mm
+d:Ge/Wire16/RMax              = 0.3 mm
+d:Ge/Wire16/HL                = Ge/Tandem/HL mm
+d:Ge/Wire16/TransX            = Ge/Channel16/TransX mm
+d:Ge/Wire16/TransY            = Ge/Channel16/TransY mm
+d:Ge/Wire16/SPhi              = 0. deg
+d:Ge/Wire16/DPhi              = 360. deg
+s:Ge/Wire16/Color             = "White"
+s:Ge/Wire16/DrawingStyle      = "Solid"
+b:Ge/Wire16/IsParallel        = "True"
+s:Ge/Wire16/ParallelWorldName = "WireWorld"
+
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  3 "TandemWorld" "ChannelWorld" "WireWorld"
+
+
+##### Graphics #####
+#b:Ts/PauseBeforeQuit = "T"
+#s:Gr/ViewA/Type        = "OpenGL"
+#b:Gr/ViewA/IncludeTrajectories = "False"
+#Ts/UseQt = "True"
+
