@@ -4,7 +4,7 @@
 # Geometry - simple cube
 s:Ge/Test/Parent = "World"
 s:Ge/Test/Type = "TsBox"
-s:Ge/Test/Material = "Air"
+s:Ge/Test/Material = "Water_75ev"
 s:Ge/Test/DrawingStyle = "Solid"
 b:Ge/Test/PrintInformation = "True"
 
@@ -60,7 +60,7 @@ d:Ph/Default/EMRangeMax = 500. MeV
 # Scoring
 s:Sc/TestScore/Quantity = "PhaseSpace"
 s:Sc/TestScore/Component = "Test"
-s:Sc/TestScore/Surface = "Test/XPlusSurface"
+s:Sc/TestScore/Surface = "Test/ZPlusSurface"
 
 s:Sc/TestScore/OutputFile = "../Outputs/test_output_1"
 s:Sc/TestScore/OutputType = "ASCII"
