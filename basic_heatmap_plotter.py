@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 import seaborn as sns
+from scipy.interpolate import griddata
 
 # Import phase space file
 phase = np.genfromtxt("../Outputs/test_output_1.phsp")
@@ -12,9 +14,35 @@ mev = phase[:,5]
 
 energy_z = np.column_stack((x_pos, y_pos, mev))
 
-# Plot (x, y) positions receiving energy > 100 eV
-plt.scatter(x_pos, y_pos)
-plt.show()
+# Min-max normalization on mev values
+# Is this necessary?
+mev_normal = (mev - np.amin(mev))/(np.max(mev) - np.min(mev))
 
-# Generate contour map of energy deposition along (x, y) plane
-# See matplotlib countour function: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
+# Since data is semi-random, extrapolate to a grid
+# Method 1: https://matplotlib.org/stable/gallery/images_contours_and_fields/irregulardatagrid.html
+# Method 2: https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html#scipy.interpolate.griddata
+
+fig, ax = plt.subplots()
+
+x_grid = np.linspace(-100, 100, num=1000)
+y_grid = np.linspace(-100, 100, num=1000)
+X, Y = np.meshgrid(x_pos, y_pos) # get a better plot if we meshgrid on sampled points, not a generated linspace
+
+# Method 1: using LinearTriInterpolator
+
+triang = tri.Triangulation(x_pos, y_pos)
+interpolator = tri.LinearTriInterpolator(triang, mev_normal)
+
+Z = interpolator(X, Y)
+
+#ax.scatter(X, Y) # what does meshgrid on sampled points looks like?
+ax.contourf(X, Y, Z)
+
+# Method #2: scipy griddata function
+"""
+test_grid = griddata((x_pos, y_pos), mev, (X, Y), method = "linear")
+ax.imshow(test_grid)
+"""
+#ax.scatter(x_pos, y_pos) # optionally display scatter of voxels receiving particles
+
+plt.show()

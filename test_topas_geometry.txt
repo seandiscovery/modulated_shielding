@@ -8,9 +8,9 @@ s:Ge/Test/Material = "Water_75ev"
 s:Ge/Test/DrawingStyle = "Solid"
 b:Ge/Test/PrintInformation = "True"
 
-d:Ge/Test/HLX = 1.0 m
-d:Ge/Test/HLY = 1.0 m
-d:Ge/Test/HLZ = 1.0 m
+d:Ge/Test/HLX = 0.1 m
+d:Ge/Test/HLY = 0.1 m
+d:Ge/Test/HLZ = 0.1 m
 
 d:Ge/Test/TransX = 0.0 m
 d:Ge/Test/TransY = 0.0 m
@@ -37,7 +37,7 @@ d:So/Demo/BeamAngularCutoffX = 90. deg
 d:So/Demo/BeamAngularCutoffY = 90. deg 
 d:So/Demo/BeamAngularSpreadX = 0.0032 rad 
 d:So/Demo/BeamAngularSpreadY = 0.0032 rad 
-i:So/Demo/NumberOfHistoriesInRun = 1000
+i:So/Demo/NumberOfHistoriesInRun = 5000
 
 s:Ge/BeamPosition/Parent="World"
 s:Ge/BeamPosition/Type="Group"
