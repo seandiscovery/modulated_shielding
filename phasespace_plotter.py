@@ -1,13 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+import matplotlib.patches as ptc
 import seaborn as sns
 from scipy.interpolate import griddata
 
 # This script assumes we are running the phase space scorer along a surface (e.g. ZMinusSurface)
 
 # Import phase space file
-phase = np.genfromtxt("../Outputs/test_output_1.phsp")
+phase = np.genfromtxt("../Outputs/cylinder_test_output_1.phsp")
 
 # Extract energy deposition along the relevant axis (e.g. along z axis if we use ZMinusSurface parameter)
 x_pos = phase[:,0]
@@ -18,7 +19,7 @@ energy_z = np.column_stack((x_pos, y_pos, mev))
 
 # Min-max normalization on mev values
 # Is this necessary?
-mev_normal = (mev - np.amin(mev))/(np.max(mev) - np.min(mev))
+mev_normal = (mev - np.min(mev))/(np.max(mev) - np.min(mev))
 
 # Since data is semi-random, extrapolate to a grid
 # Method 1: https://matplotlib.org/stable/gallery/images_contours_and_fields/irregulardatagrid.html
@@ -50,5 +51,9 @@ ax.imshow(test_grid)
 # ax.tricontour(x_pos, y_pos, mev_normal)
 
 #ax.scatter(x_pos, y_pos) # optionally display scatter of voxels receiving particles
+
+# Optional: draw end of cylinder on plot (for geometry = TsCylinder)
+circle = plt.Circle((0,0), radius=50.0, edgecolor="red", fill=False)
+ax.add_patch(circle)
 
 plt.show()
