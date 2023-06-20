@@ -9,8 +9,8 @@ s:Ge/Test/DrawingStyle = "Solid"
 b:Ge/Test/PrintInformation = "True"
 
 d:Ge/Test/RMin = 0.0 cm
-d:Ge/Test/RMax = 50.0 cm
-d:Ge/Test/HL = 100.0 cm
+d:Ge/Test/RMax = 0.5 cm
+d:Ge/Test/HL = 5.0 cm
 d:Ge/Test/SPhi = 0.0 deg
 d:Ge/Test/DPhi = 360.0 deg
 
@@ -44,7 +44,7 @@ d:So/Demo/BeamAngularCutoffX = 90. deg
 d:So/Demo/BeamAngularCutoffY = 90. deg 
 d:So/Demo/BeamAngularSpreadX = 0.0032 rad 
 d:So/Demo/BeamAngularSpreadY = 0.0032 rad 
-i:So/Demo/NumberOfHistoriesInRun = 1000
+i:So/Demo/NumberOfHistoriesInRun = 2000
 
 s:Ge/BeamPosition/Parent="World"
 s:Ge/BeamPosition/Type="Group"
@@ -65,11 +65,11 @@ d:Ph/Default/EMRangeMin = 100. eV
 d:Ph/Default/EMRangeMax = 500. MeV
 
 # Scoring
-s:Sc/TestScore/Quantity = "EnergyDeposit"
-s:Sc/TestScore/Component = "Test"
-s:Sc/TestScore/OutputType = "csv"
-
+s:Sc/TestScore/Quantity = "TrackLengthEstimator"
+s:Sc/TestScore/Component = "Test" # Set scoring geometry here
+s:Sc/TestScore/InputFile = "/Applications/topas/examples/Brachytherapy/Muen.dat"
 s:Sc/TestScore/OutputFile = "../Outputs/cylinder_volume_test_output"
+s:Sc/TestScore/OutputType = "csv"
 
 # GUI
 Ts/UseQt = "True"

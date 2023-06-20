@@ -1,0 +1,143 @@
+# Solid tungsten cylinder in same dimensions as brachytherapy applicator
+# Author: Sean Mullane
+
+# Materials - defining tungsten, capsule steel
+sv:Ma/CylinderW/Components = 1 "Tungsten" 
+uv:Ma/CylinderW/Fractions  = 1 1.0
+d:Ma/CylinderW/Density     = 19.30 g/cm3
+
+sv:Ma/CapsuleSteel/Components = 9 "Carbon" "Chromium" "Iron" "Manganese" "Molybdenum" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/CapsuleSteel/Fractions  = 9 0.0003 0.18 0.61895 0.02 0.03 0.14 0.00045 0.01 0.0003
+d:Ma/CapsuleSteel/Density     = 8.0 g/cm3
+
+# Geometry - water phantom
+d:Ge/World/HLX      = 10 cm
+d:Ge/World/HLY      = 10 cm
+d:Ge/World/HLZ      = 10 cm
+s:Ge/World/Material = "G4_WATER"
+
+# Geometry - tungsten cylinder
+# Dimensions from SMART_Applicator_v3
+s:Ge/Test/Parent = "World"
+s:Ge/Test/Type = "TsCylinder"
+s:Ge/Test/Material = "CylinderW"
+s:Ge/Test/Color = "blue"
+s:Ge/Test/DrawingStyle = "Solid"
+b:Ge/Test/PrintInformation = "True"
+
+d:Ge/Test/RMin = 0.6 mm
+d:Ge/Test/RMax = 3.0 mm
+d:Ge/Test/HL = 25.0 mm
+d:Ge/Test/SPhi = 0.0 deg
+d:Ge/Test/DPhi = 360.0 deg
+
+d:Ge/Test/TransX = 0.0 m
+d:Ge/Test/TransY = 0.0 m
+d:Ge/Test/TransZ = 0.0 m
+d:Ge/Test/RotX = 0.0 deg
+d:Ge/Test/RotY = 0.0 deg
+d:Ge/Test/RotZ = 0.0 deg
+
+# Applicator binning
+# For now, not binning the applicator itself
+#i:Ge/Test/RBins = 10
+#i:Ge/Test/PhiBins = 10
+#i:Ge/Test/ZBins = 10
+
+# Particle source - definition
+s:So/TestSource/Type = "Volumetric"
+s:So/TestSource/Component = "SourceGeometry"
+s:So/TestSource/ActiveMaterial = "G4_Ir"
+s:So/TestSource/BeamParticle = "gamma"
+s:So/TestSource/BeamEnergySpectrumType = "Discrete"
+i:So/TestSource/NumberOfHistoriesInRun = 1000
+b:So/TestSource/RecursivelyIncludeChildren = "True"
+
+s:Ge/SourceGeometry/Parent = "World"
+s:Ge/SourceGeometry/Type = "Group"
+
+# Particle source - capsule geometry
+# Dimensions from Ir192_GammaMedPlus
+s:Ge/Capsule/Parent = "SourceGeometry"
+s:Ge/Capsule/Type = "TsCylinder"
+s:Ge/Capsule/Material = "CapsuleSteel"
+
+d:Ge/Capsule/RMin = 0.35 mm
+d:Ge/Capsule/RMax = 0.45 mm
+d:Ge/Capsule/HL = 1.75 mm
+d:Ge/Capsule/SPhi = 0. deg
+d:Ge/Capsule/DPhi = 360.0 deg
+d:Ge/Capsule/TransZ = 0 mm
+
+s:Ge/Capsule/Color = "white"
+s:Ge/Capsule/DrawingStyle = "Solid"
+
+# Particle source - iridium geometry
+# Dimensions from Ir192_GammaMedPlus
+s:Ge/SourceCylinder/Parent = "SourceGeometry"
+s:Ge/SourceCylinder/Type = "TsCylinder"
+s:Ge/SourceCylinder/Material = "G4_Ir"
+
+d:Ge/SourceCylinder/RMin = 0 mm
+d:Ge/SourceCylinder/RMax = 0.3 mm
+d:Ge/SourceCylinder/HL = 1.70 mm
+d:Ge/SourceCylinder/SPhi = 0. deg
+d:Ge/SourceCylinder/DPhi = 360. deg
+
+s:Ge/SourceCylinder/Color = "green"
+s:Ge/SourceCylinder/DrawingStyle = "Solid"
+
+# Particle source - spectrum 
+# From Ir192_GammaMedPlus
+dv:So/TestSource/BeamEnergySpectrumValues = 39 61.486 63.0 65.122 66.831 71.079 71.414 73.363 75.368 75.749 77.831 110.4 136.3426 176.98 201.3112 205.79430 280.27 283.2668 295.95650 308.45507 316.50618 329.17 374.4852 416.4688 420.52 468.0688 484.5751 485.30 489.06 588.5810 593.49 599.41 604.41105 612.4621 703.87 765.8 884.5365 1061.48 1089.9 1378.20 keV
+
+uv:So/TestSource/BeamEnergySpectrumWeightsUnscaled = 39 0.0120 0.0205 0.0263 0.0446 0.00241 0.00466 0.00163 0.00533 0.01025 0.00365 0.000122 0.0020 0.000043 0.00473 0.0334 0.00009 0.00266 0.2872 0.2968 0.8271 0.000174 0.00726 0.00669 0.00069 0.4781 0.03187 0.000023 0.00438 0.04517 0.000421 0.000039 0.0820 0.0534 0.000053 0.000013 0.00291 0.000530 0.000012 0.000012
+
+uv:So/TestSource/BeamEnergySpectrumWeights = 0.43492973 * So/TestSource/BeamEnergySpectrumWeightsUnscaled
+
+# Particle source - physics
+# Recommended in SimpleDoseScorer
+sv:Ph/Default/Modules = 1 "g4em-livermore"
+
+# Scoring geometry - box
+s:Ge/DoseGridBox/Type       = "TsBox"
+s:Ge/DoseGridBox/Parent     = "World"
+d:Ge/DoseGridBox/HLX        =  2.505 cm
+d:Ge/DoseGridBox/HLY        =  2.505 cm
+d:Ge/DoseGridBox/HLZ        =  2.505 cm
+
+s:Ge/DoseGridBox/Color      =  "red" 
+b:Ge/DoseGridBox/IsParallel = "True"
+i:Ge/DoseGridBox/XBins      = 10
+i:Ge/DoseGridBox/YBins      = 10
+i:Ge/DoseGridBox/ZBins      = 10
+
+# Scoring geometry - cylinder
+# Note: this may not work due to an issue with Geant4 prohibiting Cylinder/Sphere in parallel world
+# See https://topas.readthedocs.io/en/latest/parameters/geometry/parallel_world.html
+#s:Ge/DoseGridCyl/Type = "TsCylinder"
+#s:Ge/DoseGridCyl/parent = "World"
+#d:Ge/DoseGridCyl/RMin = 0.0 cm
+#d:Ge/DoseGridCyl/RMax = 2.505 cm
+#d:Ge/DoseGridCyl/HL = 2.505 cm
+#d:Ge/DoseGridCyl/SPhi = 0.0 deg
+#d:Ge/DoseGridCyl/DPhi = 360.0 deg
+
+#s:Ge/DoseGridCyl/Color = "yellow"
+#b:Ge/DoseGridCyl/IsParallel = "True"
+#i:Ge/DoseGridCyl/RBins = 10
+#i:Ge/DoseGridCyl/PhiBins = 10
+#i:Ge/DoseGridCyl/ZBins = 10
+
+# TLE scorer
+s:Sc/DoseToPhantom/Quantity = "TrackLengthEstimator"
+s:Sc/DoseToPhantom/Component = "DoseGridBox" # Set scoring geometry here
+s:Sc/DoseToPhantom/InputFile = "/Applications/topas/examples/Brachytherapy/Muen.dat"
+s:Sc/DoseToPhantom/OutputFile = "../Outputs/tungsten_test"
+s:Sc/DoseToPhantom/OutputType = "csv"
+
+# GUI
+Ts/UseQt = "True"
+s:Gr/Graphic/Type = "OpenGL"
+b:Gr/Graphic/IncludeGeometry = "True"
+b:Gr/Graphic/IncludeTrajectories = "True"
