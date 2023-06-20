@@ -38,12 +38,6 @@ d:Ge/Test/RotX = 0.0 deg
 d:Ge/Test/RotY = 0.0 deg
 d:Ge/Test/RotZ = 0.0 deg
 
-# Applicator binning
-# For now, not binning the applicator itself
-#i:Ge/Test/RBins = 10
-#i:Ge/Test/PhiBins = 10
-#i:Ge/Test/ZBins = 10
-
 # Particle source - definition
 s:So/TestSource/Type = "Volumetric"
 s:So/TestSource/Component = "SourceGeometry"
@@ -113,7 +107,7 @@ i:Ge/DoseGridBox/YBins      = 10
 i:Ge/DoseGridBox/ZBins      = 10
 
 # Scoring geometry - cylinder
-# Note: this may not work due to an issue with Geant4 prohibiting Cylinder/Sphere in parallel world
+# Note: this may not work due to an issue with Geant4 prohibiting binned Cylinder/Sphere in parallel world
 # See https://topas.readthedocs.io/en/latest/parameters/geometry/parallel_world.html
 #s:Ge/DoseGridCyl/Type = "TsCylinder"
 #s:Ge/DoseGridCyl/parent = "World"
