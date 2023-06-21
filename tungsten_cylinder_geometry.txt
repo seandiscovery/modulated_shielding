@@ -1,6 +1,8 @@
 # Solid tungsten cylinder in same dimensions as brachytherapy applicator
 # Author: Sean Mullane
 
+b:Gr/Enable = "False" # Disable graphics for long sims
+
 # Materials - defining tungsten, capsule steel
 sv:Ma/CylinderW/Components = 1 "Tungsten" 
 uv:Ma/CylinderW/Fractions  = 1 1.0
@@ -44,7 +46,7 @@ s:So/TestSource/Component = "SourceGeometry"
 s:So/TestSource/ActiveMaterial = "G4_Ir"
 s:So/TestSource/BeamParticle = "gamma"
 s:So/TestSource/BeamEnergySpectrumType = "Discrete"
-i:So/TestSource/NumberOfHistoriesInRun = 1000
+i:So/TestSource/NumberOfHistoriesInRun = 5000
 b:So/TestSource/RecursivelyIncludeChildren = "True"
 
 s:Ge/SourceGeometry/Parent = "World"
@@ -102,9 +104,9 @@ d:Ge/DoseGridBox/HLZ        =  2.505 cm
 
 s:Ge/DoseGridBox/Color      =  "red" 
 b:Ge/DoseGridBox/IsParallel = "True"
-i:Ge/DoseGridBox/XBins      = 10
-i:Ge/DoseGridBox/YBins      = 10
-i:Ge/DoseGridBox/ZBins      = 10
+i:Ge/DoseGridBox/XBins      = 101
+i:Ge/DoseGridBox/YBins      = 101
+i:Ge/DoseGridBox/ZBins      = 101
 
 # Scoring geometry - cylinder
 # Note: this may not work due to an issue with Geant4 prohibiting binned Cylinder/Sphere in parallel world
