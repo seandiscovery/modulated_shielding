@@ -36,11 +36,15 @@ unit = np.sqrt(2*lattice*lattice)
 # linspace better than arange - see https://numpy.org/doc/stable/reference/generated/numpy.arange.html
 distance = np.linspace(-((XBins - 1)/2)*unit, ((XBins - 1)/2)*unit, XBins)
 
-# Current problem: how to extract distance and energy values corresponding to region 3 mm --> 8 mm from center of applicator?
-# Should be able to use Boolean indexing on distance array, but haven't figured out how to do this yet
-# Once we have values for distance array, how do we extract appropriate energies from linear_energy array?
+# Optional: zoom into plot over range [r1, r2]
+r1 = 0.3 # cm
+r2 = 0.8 # cm
+b = (distance > r1) & (distance < r2)
+dist_range = distance[b]
+energy_range = linear_energy[:,2][b]
 
 # Plot values
 fig, ax = plt.subplots()
-ax.plot(distance, linear_energy[:,2])
+ax.plot(dist_range, energy_range) # zoomed in on a particular distance range, set by above parameters
+#ax.plot(distance, linear_energy[:,2]) # plot along entire line y = x
 plt.show()
