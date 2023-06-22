@@ -1,5 +1,5 @@
-# One-dimensional plotter for TOPAS outputs
-# Plots radiation dose along the line y = x assuming cubic binning
+# One-dimensional plotter for TOPAS outputs - sandbox
+# Plots radiation dose along various axes assuming cubic binning
 # Author: Sean Mullane
 
 import numpy as np 
@@ -7,14 +7,17 @@ import matplotlib.pyplot as plt
 
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
-# Bins from TOPAS config file
+# Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
 XBins = 201
 YBins = 201
 ZBins = 201
-dose_grid_half = 2.505 # units = cm
+dose_grid_half = 1.005 # units = cm
+plot_axis = 0 # set axis to plot against
+const_axis = 1 # constant axis
+#dose_rx =  # units = Gy
 
-z_slice = 100 # select z plane between 0 and (ZBins - 1)
+z_slice = 50 # select z plane between 0 and (ZBins - 1)
 
 # Extract (x, y, E) points along chosen z plane
 xy_plane = np.empty([XBins*YBins, 3])
@@ -25,33 +28,29 @@ for i in range(np.shape(volume)[0]):
 		xy_plane[j] = np.array([volume[i,0], volume[i,1], volume[i,3]])
 		j += 1
 
-# Extract energy values along line y = x
-#mask = (xy_plane[:,0]==xy_plane[:,1])
+# Voxel --> distance conversion - shift origin via XBins/2 and scale via lattice length
+lattice = dose_grid_half*2/XBins
 
-# Extract energy values along y = YBins/2
-#mask = (xy_plane[:,1]==int(YBins/2))
+xy_rescaled = (xy_plane[:,[0,1]] - int(XBins/2))*lattice
+xy_plane[:,[0,1]] = xy_rescaled
 
-# Extract energy values along x = XBins/2
-mask = (xy_plane[:,0]==int(XBins/2))
+# Scale dose delivered to % of dose prescription
+#xy_plane[:,2] = (xy_plane[:,2]/dose_rx)*100
+
+# Extract energy values along a line defined by a constant
+constant = 0
+mask = (xy_plane[:,const_axis]==constant)
 
 linear_energy = xy_plane[mask]
 
-# Convert (x, y) voxels to distance
-lattice = dose_grid_half*2/XBins
-unit = np.sqrt(2*lattice*lattice)
-
-# linspace better than arange - see https://numpy.org/doc/stable/reference/generated/numpy.arange.html
-distance = np.linspace(-((XBins - 1)/2)*unit, ((XBins - 1)/2)*unit, XBins)
-
-# Optional: zoom into plot over range [r1, r2]
-r1 = 0.3 # cm
-r2 = 0.8 # cm
-b = (distance > r1) & (distance < r2)
-dist_range = distance[b]
-energy_range = linear_energy[:,2][b]
+# Optionally plot a range [r1, r2]
+# Units = cm
+r1 = 0.3
+r2 = 1.0
+b = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 # Plot values
 fig, ax = plt.subplots()
-#ax.plot(dist_range, energy_range) # zoomed in on a particular distance range, set by above parameters
-ax.plot(distance, linear_energy[:,2]) # plot along entire line y = x (or y = YBins/2, x = XBins/2)
+#ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+ax.plot(linear_energy[:,plot_axis][b], linear_energy[:,2][b]) # plot [r1, r2]
 plt.show()
