@@ -47,10 +47,15 @@ linear_energy = xy_plane[mask]
 # Units = cm
 r1 = 0.3
 r2 = 1.0
-b = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
+b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
+
+r3 = -1.0
+r4 = -0.3
+b2 = (linear_energy[:,plot_axis] > r3) & (linear_energy[:,plot_axis] < r4)
 
 # Plot values
 fig, ax = plt.subplots()
 #ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
-ax.plot(linear_energy[:,plot_axis][b], linear_energy[:,2][b]) # plot [r1, r2]
+ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+#ax.plot(linear_energy[:,plot_axis][b2], linear_energy[:,2][b2]) # plot [r3, r4]
 plt.show()
