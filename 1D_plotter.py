@@ -26,7 +26,14 @@ for i in range(np.shape(volume)[0]):
 		j += 1
 
 # Extract energy values along line y = x
-mask = (xy_plane[:,0]==xy_plane[:,1])
+#mask = (xy_plane[:,0]==xy_plane[:,1])
+
+# Extract energy values along y = YBins/2
+#mask = (xy_plane[:,1]==int(YBins/2))
+
+# Extract energy values along x = XBins/2
+mask = (xy_plane[:,0]==int(XBins/2))
+
 linear_energy = xy_plane[mask]
 
 # Convert (x, y) voxels to distance
@@ -45,6 +52,6 @@ energy_range = linear_energy[:,2][b]
 
 # Plot values
 fig, ax = plt.subplots()
-ax.plot(dist_range, energy_range) # zoomed in on a particular distance range, set by above parameters
-#ax.plot(distance, linear_energy[:,2]) # plot along entire line y = x
+#ax.plot(dist_range, energy_range) # zoomed in on a particular distance range, set by above parameters
+ax.plot(distance, linear_energy[:,2]) # plot along entire line y = x (or y = YBins/2, x = XBins/2)
 plt.show()
