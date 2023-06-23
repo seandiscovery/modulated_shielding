@@ -1,4 +1,4 @@
-# One-dimensional plotter for TOPAS outputs - sandbox
+# One-dimensional plotter for TOPAS outputs
 # Plots radiation dose along various axes assuming cubic binning
 # Author: Sean Mullane
 
@@ -13,8 +13,8 @@ XBins = 201
 YBins = 201
 ZBins = 201
 dose_grid_half = 1.005 # units = cm
-plot_axis = 0 # set axis to plot against
-const_axis = 1 # constant axis
+plot_axis = 1 # set axis to plot against
+const_axis = 0 # constant axis
 #dose_rx =  # units = Gy
 
 z_slice = 50 # select z plane between 0 and (ZBins - 1)
@@ -56,6 +56,7 @@ b2 = (linear_energy[:,plot_axis] > r3) & (linear_energy[:,plot_axis] < r4)
 # Plot values
 fig, ax = plt.subplots()
 #ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
-ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
-#ax.plot(linear_energy[:,plot_axis][b2], linear_energy[:,2][b2]) # plot [r3, r4]
+#ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+ax.plot(linear_energy[:,plot_axis][b2], linear_energy[:,2][b2]) # plot [r3, r4]
+plt.savefig("../Outputs/zslice_50_range_neg0.3_neg1.0_xConst.png")
 plt.show()
