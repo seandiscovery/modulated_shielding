@@ -1,5 +1,4 @@
 # One-dimensional plotter for TOPAS outputs over a range of z_slice values
-# Plots radiation dose along various axes assuming cubic binning
 # Author: Sean Mullane
 
 import numpy as np 
@@ -19,7 +18,7 @@ const_axis = 0 # constant axis
 
 fig, ax = plt.subplots()
 
-z_range = np.arange(0, 51, 10)
+z_range = np.arange(0, 101, 10)
 curves = np.array([])
 
 for z in z_range:
@@ -60,8 +59,8 @@ for z in z_range:
 	print("Plotting z slice " + str(z) + "...")
 
 	# Plot values
-	ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
-	#ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+	#ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+	ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 	curves = np.append(curves, "z_slice = " + str(z))
 
 ax.legend(curves)
