@@ -2,7 +2,7 @@
 # Plots radiation dose along various axes assuming cubic binning
 # Author: Sean Mullane
 
-import numpy as np 
+import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
 
@@ -40,8 +40,8 @@ xy_plane[:,[0,1]] = xy_rescaled
 #xy_plane[:,2] = (xy_plane[:,2]/dose_rx)*100
 
 # Extract energy values along a line defined by a constant
-#constant = 0
-#mask = (xy_plane[:,const_axis]==constant)
+constant = 0
+mask = (xy_plane[:,const_axis]==constant)
 
 # Development - extract energy values along angle theta = (0, pi/2)
 # Deprecated - plotting along arbitrary angle in separate script
@@ -60,8 +60,9 @@ err = 0.01
 mask_angle = (urq[:,1]/urq[:,0] < np.arctan2(theta) + err) & (urq[:,1]/urq[:,0] < np.arctan2(theta) - err)
 linear_energy = urq[mask_angle]
 """
-
+print(np.shape(mask))
 linear_energy = xy_plane[mask]
+print(linear_energy)
 
 # Optionally plot a range [r1, r2]
 # Units = cm
@@ -78,9 +79,9 @@ b2 = (linear_energy[:,plot_axis] > r3) & (linear_energy[:,plot_axis] < r4)
 
 # Plot values
 fig, ax = plt.subplots()
-ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+#ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
 #ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 #ax.plot(linear_energy[:,plot_axis][b2], linear_energy[:,2][b2]) # plot [r3, r4]
 #ax.plot(linear_energy[:,plot_axis][b1], linear_energy_avg) # plot averaged energy values over distance from applicator
 #plt.savefig("../Outputs/zslice_50_range_0.3_1.0_yConst_avgE.png")
-plt.show()
+#plt.show()

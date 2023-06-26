@@ -15,8 +15,8 @@ ZBins = 201
 dose_grid_half = 1.005 # units = cm
 plot_axis = 0 # set axis to plot against (0 = r, 1 = theta)
 const_axis = 1 # constant axis
-theta = 0 # plot dose along an arbitrary vector
-err = 0.1 # set error for plotting along theta
+theta = pi # plot dose along a vector in range theta = (0, pi]
+err = 0.01 # set error for plotting along theta
 #dose_rx =  # units = Gy
 
 z_slice = 50 # select z plane between 0 and (ZBins - 1)
@@ -42,17 +42,36 @@ xy_polar[:,0] = np.sqrt(xy_plane[:,0]**2 + xy_plane[:,1]**2) # (x, y) --> r
 xy_polar[:,1] = np.arctan2(xy_plane[:,1], xy_plane[:,0]) # (x, y) --> theta
 xy_polar[:,2] = xy_plane[:,2] # energy
 
-#mask = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant axis
-mask = (xy_polar[:, const_axis] == theta)
-linear_energy = xy_polar[mask]
+mask1 = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant 
+mask0 = (xy_polar[:,const_axis] < (theta - pi) + err) & (xy_polar[:,const_axis] > (theta - pi) - err)
+mask10 = mask0 + mask1
+
+#mask2 = (xy_polar[:,const_axis] == theta)
+#mask3 = (xy_polar[:,const_axis] == theta + pi)
+#mask4 = mask2 + mask3
+
+linear_energy_1 = xy_polar[mask10]
+
+maskA = (linear_energy_1[:,const_axis] < (theta - pi) + err) & (linear_energy_1[:,const_axis] > (theta - pi) - err)
+linear_energy_1[:,0][maskA] *= -1
+
+#print(linear_energy_1)
+
+#linear_energy_2 = xy_polar[mask4]
+#linear_energy_2[:,0][linear_energy_2[:,const_axis] == theta + pi] *= -1
+
+#print(np.shape(linear_energy_2))
+#print(linear_energy_1)
 
 # Optionally plot a range (r1, r2)
 # Units = cm
 r1 = 0.3
 r2 = 1.0
-b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
+#b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+ax.plot(linear_energy_1[:,plot_axis], linear_energy_1[:,2], color="red") # plot entire range 
+#ax.plot(linear_energy_2[:,plot_axis], linear_energy_2[:,2], color="blue")
 plt.show()
+
 
