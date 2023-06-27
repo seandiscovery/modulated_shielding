@@ -15,13 +15,16 @@ ZBins = 201
 dose_grid_half = 1.005 # units = cm
 plot_axis = 0 # set axis to plot against (0 = r, 1 = theta)
 const_axis = 1 # constant axis
-theta = pi # plot dose along a vector in range theta = (0, pi]
+theta = 0 # plot dose along a vector in interval theta = [0, pi]
 err = 0.01 # set error for plotting along theta
-#dose_rx =  # units = Gy
 
 z_slice = 50 # select z plane between 0 and (ZBins - 1)
 
+xy_plane = volume[volume[:,2] == z_slice]
+xy_plane = np.delete(xy_plane, 2, 1)
+
 # Extract (x, y, E) points along chosen z plane
+"""
 xy_plane = np.empty([XBins*YBins, 3])
 j = 0
 # Note: may be able to make this simpler using Boolean indexing
@@ -29,6 +32,7 @@ for i in range(np.shape(volume)[0]):
 	if volume[i,2] == z_slice:
 		xy_plane[j] = np.array([volume[i,0], volume[i,1], volume[i,3]])
 		j += 1
+"""
 
 # Voxel --> distance conversion - shift origin via XBins/2 and scale via lattice length
 lattice = dose_grid_half*2/XBins
@@ -43,7 +47,7 @@ xy_polar[:,1] = np.arctan2(xy_plane[:,1], xy_plane[:,0]) # (x, y) --> theta
 xy_polar[:,2] = xy_plane[:,2] # energy
 
 mask1 = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant 
-mask0 = (xy_polar[:,const_axis] < (theta - pi) + err) & (xy_polar[:,const_axis] > (theta - pi) - err)
+mask0 = (xy_polar[:,const_axis] < (theta + pi) + err) & (xy_polar[:,const_axis] > (theta + pi) - err)
 mask10 = mask0 + mask1
 
 #mask2 = (xy_polar[:,const_axis] == theta)
@@ -52,7 +56,7 @@ mask10 = mask0 + mask1
 
 linear_energy_1 = xy_polar[mask10]
 
-maskA = (linear_energy_1[:,const_axis] < (theta - pi) + err) & (linear_energy_1[:,const_axis] > (theta - pi) - err)
+maskA = (linear_energy_1[:,const_axis] < (theta + pi) + err) & (linear_energy_1[:,const_axis] > (theta + pi) - err)
 linear_energy_1[:,0][maskA] *= -1
 
 #print(linear_energy_1)
@@ -67,10 +71,11 @@ linear_energy_1[:,0][maskA] *= -1
 # Units = cm
 r1 = 0.3
 r2 = 1.0
-#b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
+b1 = (linear_energy_1[:,plot_axis] > r1) & (linear_energy_1[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.plot(linear_energy_1[:,plot_axis], linear_energy_1[:,2], color="red") # plot entire range 
+#ax.plot(linear_energy_1[:,plot_axis], linear_energy_1[:,2], color="red") # plot entire range
+ax.plot(linear_energy_1[:,plot_axis][b1], linear_energy_1[:,2][b1]) # plot [r1, r2]
 #ax.plot(linear_energy_2[:,plot_axis], linear_energy_2[:,2], color="blue")
 plt.show()
 
