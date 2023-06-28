@@ -8,7 +8,7 @@ from scipy.interpolate import griddata
 # This script assumes we are running the phase space scorer along a surface (e.g. ZMinusSurface)
 
 # Import phase space file
-phase = np.genfromtxt("../Outputs/cylinder_test_output_1.phsp")
+phase = np.genfromtxt("/Users/seanmullane/Desktop/Research_2023/Outputs/cylinder_test_output_1.phsp")
 
 # Extract energy deposition along the relevant axis (e.g. along z axis if we use ZMinusSurface parameter)
 x_pos = phase[:,0]

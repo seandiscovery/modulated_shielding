@@ -9,7 +9,7 @@ from math import pi
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
-theta = pi
+theta = (3*pi)/4
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
@@ -32,6 +32,8 @@ lattice = dose_grid_half*2/XBins
 xy_rescaled = (xy_plane[:,[0,1]] - int(XBins/2))*lattice
 xy_plane[:,[0,1]] = xy_rescaled
 
+print(np.shape(xy_plane[:,2]))
+
 # Transform Cartesian to polar coordinates
 xy_polar = np.empty(np.shape(xy_plane))
 xy_polar[:,0] = np.sqrt(xy_plane[:,0]**2 + xy_plane[:,1]**2) # (x, y) --> r
@@ -41,9 +43,8 @@ xy_polar[:,2] = xy_plane[:,2] # energy
 # Extract (r, theta, E) values along line defined by theta
 mask_theta = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant 
 mask_pi = (xy_polar[:,const_axis] < (theta - pi) + err) & (xy_polar[:,const_axis] > (theta - pi) - err)
-mask_angle = mask_theta + mask_pi
 
-linear_energy = xy_polar[mask_angle]
+linear_energy = xy_polar[(mask_theta + mask_pi)]
 
 # Multiply values along (theta + pi) by -1 for easier plotting
 mask_invert = (linear_energy[:,const_axis] < (theta - pi) + err) & (linear_energy[:,const_axis] > (theta - pi) - err)
