@@ -9,7 +9,7 @@ from math import pi
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
-theta = (3*pi)/4
+theta = pi/4
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
@@ -57,7 +57,7 @@ r2 = 1.0
 b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.plot(linear_energy[:,plot_axis], linear_energy[:,2], color="red") # plot entire range
+ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
 #ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 plt.show()
 
