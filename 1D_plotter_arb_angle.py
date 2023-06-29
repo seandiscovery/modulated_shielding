@@ -32,8 +32,6 @@ lattice = dose_grid_half*2/XBins
 xy_rescaled = (xy_plane[:,[0,1]] - int(XBins/2))*lattice
 xy_plane[:,[0,1]] = xy_rescaled
 
-print(np.shape(xy_plane[:,2]))
-
 # Transform Cartesian to polar coordinates
 xy_polar = np.empty(np.shape(xy_plane))
 xy_polar[:,0] = np.sqrt(xy_plane[:,0]**2 + xy_plane[:,1]**2) # (x, y) --> r
