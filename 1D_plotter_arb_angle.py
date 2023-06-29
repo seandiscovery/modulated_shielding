@@ -9,7 +9,7 @@ from math import pi
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
-theta = pi
+theta = pi/4
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
@@ -41,9 +41,8 @@ xy_polar[:,2] = xy_plane[:,2] # energy
 # Extract (r, theta, E) values along line defined by theta
 mask_theta = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant 
 mask_pi = (xy_polar[:,const_axis] < (theta - pi) + err) & (xy_polar[:,const_axis] > (theta - pi) - err)
-mask_angle = mask_theta + mask_pi
 
-linear_energy = xy_polar[mask_angle]
+linear_energy = xy_polar[(mask_theta + mask_pi)]
 
 # Multiply values along (theta + pi) by -1 for easier plotting
 mask_invert = (linear_energy[:,const_axis] < (theta - pi) + err) & (linear_energy[:,const_axis] > (theta - pi) - err)
@@ -56,7 +55,7 @@ r2 = 1.0
 b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.plot(linear_energy[:,plot_axis], linear_energy[:,2], color="red") # plot entire range
+ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
 #ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 plt.show()
 
