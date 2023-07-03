@@ -9,7 +9,7 @@ from math import pi
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
-theta = pi/4
+theta = pi/2
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
@@ -19,7 +19,7 @@ ZBins = 201
 dose_grid_half = 1.005 # units = cm
 plot_axis = 0 # set axis to plot against (0 = r, 1 = theta)
 const_axis = 1 # constant axis
-err = 0.01 # set error for plotting along theta
+err = 0.001 # set error for plotting along theta
 
 z_slice = 50 # select z plane between 0 and (ZBins - 1)
 
@@ -55,7 +55,7 @@ r2 = 1.0
 b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+ax.scatter(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
 #ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 plt.show()
 
