@@ -1,0 +1,183 @@
+#                                                          #
+#              SMART Applicator 6 Channel - 6 mm diameter  #
+#	       Created - January 2023		            #
+#	       Author: Emily Draeger		            #
+#                                                          #
+
+
+#d:Ge/World/HLX      = 5 cm
+#d:Ge/World/HLY      = 5 cm
+#d:Ge/World/HLZ      = 5 cm
+
+##### Define Tungsten #####
+sv:Ma/BlockTungsten/Components = 1 "Tungsten" 
+uv:Ma/BlockTungsten/Fractions  = 1 1.0
+d:Ma/BlockTungsten/Density     = 19.30 g/cm3
+
+##### TANDEM GEOMETRY #####
+s:Ge/SMARTApplicator/Type   = "Group"
+s:Ge/SMARTApplicator/Parent = "World"
+
+s:Ge/TandemGeometry/Type              	= "Group"
+s:Ge/TandemGeometry/Parent            	= "SMARTApplicator"
+b:Ge/TandemGeometry/IsParallel        	= "True"
+s:Ge/TandemGeometry/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/Tandem/Type              		= "TsCylinder"
+s:Ge/Tandem/Parent            		= "TandemGeometry"
+s:Ge/Tandem/Material          		= "BlockTungsten"
+d:Ge/Tandem/RMin              		= 0.6 mm
+d:Ge/Tandem/RMax              		= 3.0 mm
+d:Ge/Tandem/HL                		= 25 mm
+d:Ge/Tandem/SPhi              		= 0. deg
+d:Ge/Tandem/DPhi              		= 360. deg
+s:Ge/Tandem/Color             		= "Gray"
+s:Ge/Tandem/DrawingStyle      		= "Solid"
+b:Ge/Tandem/IsParallel        		= "True"
+s:Ge/Tandem/ParallelWorldName 		= "TandemWorld"
+
+s:Ge/TandemCap/Type         		= "TsSphere"
+s:Ge/TandemCap/Material     		= "BlockTungsten"
+s:Ge/TandemCap/Parent       		= "TandemGeometry"
+d:Ge/TandemCap/RMin         		= 0 mm
+d:Ge/TandemCap/RMax         		= Ge/Tandem/RMax mm
+d:Ge/TandemCap/HL           		= 1.5 mm
+d:Ge/TandemCap/TransZ      		= -25 mm
+d:Ge/TandemCap/RotX        		= 90 deg
+d:Ge/TandemCap/RotY        		= 0 deg
+d:Ge/TandemCap/RotZ        		= 0 deg
+d:Ge/TandemCap/SPhi        		= 0 deg
+d:Ge/TandemCap/DPhi        		= 180 deg
+d:Ge/TandemCap/STheta      		= 0 deg
+d:Ge/TandemCap/DTheta      		= 180 deg
+s:Ge/TandemCap/Color        		= "gray"
+s:Ge/TandemCap/DrawingStyle 		= "Solid"
+b:Ge/TandemCap/IsParallel        	= "True"
+s:Ge/TandemCap/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/TandemAirChan/Type             	= "TsCylinder"
+s:Ge/TandemAirChan/Parent           	= "TandemGeometry"
+s:Ge/TandemAirChan/Material         	= "Air"
+d:Ge/TandemAirChan/RMin             	= 0.0 mm
+d:Ge/TandemAirChan/RMax             	= Ge/Tandem/RMin mm
+d:Ge/TandemAirChan/HL               	= Ge/Tandem/HL mm
+d:Ge/TandemAirChan/SPhi             	= 0. deg
+d:Ge/TandemAirChan/DPhi             	= 360. deg
+s:Ge/TandemAirChan/Color            	= "Black"
+s:Ge/TandemAirChan/DrawingStyle     	= "Solid"
+#b:Ge/TandemAirChan/Invisible 		= "True"
+b:Ge/TandemAirChan/IsParallel       	= "True"
+s:Ge/TandemAirChan/ParallelWorldName 	= "TandemWorld"
+
+
+##### CHANNEL GEOMETRY ####
+s:Ge/ChannelGeometry/Type              = "Group"
+s:Ge/ChannelGeometry/Parent            = "SMARTApplicator"
+b:Ge/ChannelGeometry/IsParallel        = "True"
+s:Ge/ChannelGeometry/ParallelWorldName = "ChannelWorld"
+
+#Channel 1 is at 12 o'clock, with the remaining channels located clockwise from channel 1
+s:Ge/Channel1/Type              	= "TsCylinder"
+s:Ge/Channel1/Parent            	= "Tandem"
+s:Ge/Channel1/Material          	= "BlockTungsten"
+d:Ge/Channel1/RMin              	= 0.0 mm
+d:Ge/Channel1/RMax              	= 0.8 mm
+d:Ge/Channel1/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel1/TransY            	= 1.8 mm
+d:Ge/Channel1/SPhi              	= 0. deg
+d:Ge/Channel1/DPhi              	= 360. deg
+s:Ge/Channel1/Color             	= "Red"
+s:Ge/Channel1/DrawingStyle      	= "Solid"
+b:Ge/Channel1/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel1/ParallelWorldName 	= "ChannelWorld"
+
+s:Ge/Channel2/Type              	= "TsCylinder"
+s:Ge/Channel2/Parent            	= "Tandem"
+s:Ge/Channel2/Material          	= "BlockTungsten"
+d:Ge/Channel2/RMin              	= 0.0 mm
+d:Ge/Channel2/RMax              	= 0.8 mm
+d:Ge/Channel2/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel2/TransY            	= 0.9 mm
+d:Ge/Channel2/TransX			= 1.56 mm
+d:Ge/Channel2/SPhi              	= 0. deg
+d:Ge/Channel2/DPhi              	= 360. deg
+s:Ge/Channel2/Color             	= "Orange"
+s:Ge/Channel2/DrawingStyle      	= "Solid"
+b:Ge/Channel2/IsParallel        	= "True"
+#b:Ge/Channel2/Invisible 		= "True"
+s:Ge/Channel2/ParallelWorldName 	= "ChannelWorld"
+
+s:Ge/Channel3/Type              	= "TsCylinder"
+s:Ge/Channel3/Parent            	= "Tandem"
+s:Ge/Channel3/Material          	= "BlockTungsten"
+d:Ge/Channel3/RMin              	= 0.0 mm
+d:Ge/Channel3/RMax              	= 0.8 mm
+d:Ge/Channel3/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel3/TransY            	= -0.9 mm
+d:Ge/Channel3/TransX			= 1.56 mm
+d:Ge/Channel3/SPhi              	= 0. deg
+d:Ge/Channel3/DPhi              	= 360. deg
+s:Ge/Channel3/Color             	= "Orange"
+s:Ge/Channel3/DrawingStyle      	= "Solid"
+b:Ge/Channel3/IsParallel        	= "True"
+#b:Ge/Channel3/Invisible 		= "True"
+s:Ge/Channel3/ParallelWorldName 	= "ChannelWorld"
+
+s:Ge/Channel4/Type              	= "TsCylinder"
+s:Ge/Channel4/Parent            	= "Tandem"
+s:Ge/Channel4/Material          	= "BlockTungsten"
+d:Ge/Channel4/RMin              	= 0.0 mm
+d:Ge/Channel4/RMax              	= 0.8 mm
+d:Ge/Channel4/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel4/TransY            	= -1.8 mm
+d:Ge/Channel4/SPhi              	= 0. deg
+d:Ge/Channel4/DPhi              	= 360. deg
+s:Ge/Channel4/Color             	= "Orange"
+s:Ge/Channel4/DrawingStyle      	= "Solid"
+b:Ge/Channel4/IsParallel        	= "True"
+#b:Ge/Channel4/Invisible 		= "True"
+s:Ge/Channel4/ParallelWorldName 	= "ChannelWorld"
+
+s:Ge/Channel5/Type              	= "TsCylinder"
+s:Ge/Channel5/Parent            	= "Tandem"
+s:Ge/Channel5/Material          	= "BlockTungsten"
+d:Ge/Channel5/RMin              	= 0.0 mm
+d:Ge/Channel5/RMax              	= 0.8 mm
+d:Ge/Channel5/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel5/TransY            	= -0.9 mm
+d:Ge/Channel5/TransX			= -1.56 mm
+d:Ge/Channel5/SPhi              	= 0. deg
+d:Ge/Channel5/DPhi              	= 360. deg
+s:Ge/Channel5/Color             	= "Orange"
+s:Ge/Channel5/DrawingStyle      	= "Solid"
+b:Ge/Channel5/IsParallel        	= "True"
+#b:Ge/Channel5/Invisible 		= "True"
+s:Ge/Channel5/ParallelWorldName 	= "ChannelWorld"
+
+s:Ge/Channel6/Type              	= "TsCylinder"
+s:Ge/Channel6/Parent            	= "Tandem"
+s:Ge/Channel6/Material          	= "BlockTungsten"
+d:Ge/Channel6/RMin              	= 0.0 mm
+d:Ge/Channel6/RMax              	= 0.8 mm
+d:Ge/Channel6/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel6/TransY            	= 0.9 mm
+d:Ge/Channel6/TransX			= -1.56 mm
+d:Ge/Channel6/SPhi              	= 0. deg
+d:Ge/Channel6/DPhi              	= 360. deg
+s:Ge/Channel6/Color             	= "Orange"
+s:Ge/Channel6/DrawingStyle      	= "Solid"
+b:Ge/Channel6/IsParallel        	= "True"
+#b:Ge/Channel6/Invisible 		= "True"
+s:Ge/Channel6/ParallelWorldName 	= "ChannelWorld"
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  2 "TandemWorld" "ChannelWorld"
+
+##### Graphics #####
+#b:Ts/PauseBeforeQuit = "T"
+#s:Gr/ViewA/Type        = "OpenGL"
+#b:Gr/ViewA/IncludeTrajectories = "False"
+#u:Gr/ViewA/Zoom = 2. # increase to zoom in, decrease to zoom out
+#d:Gr/ViewA/Theta = 0 deg # view angle as in /vis/viewer/set/viewpointThetaPhi
+#d:Gr/ViewA/Phi = 90. deg # view angle as in /vis/viewer/set/viewpointThetaPhi
+#Ts/UseQt = "True"

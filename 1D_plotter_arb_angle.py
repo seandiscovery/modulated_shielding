@@ -9,7 +9,7 @@ from math import pi
 volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
-theta = pi/2
+theta = pi
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
@@ -21,7 +21,7 @@ plot_axis = 0 # set axis to plot against (0 = r, 1 = theta)
 const_axis = 1 # constant axis
 err = 0.001 # set error for plotting along theta
 
-z_slice = 50 # select z plane between 0 and (ZBins - 1)
+z_slice = 80 # select z plane between 0 and (ZBins - 1)
 
 xy_plane = volume[volume[:,2] == z_slice]
 xy_plane = np.delete(xy_plane, 2, 1)
@@ -55,7 +55,7 @@ r2 = 1.0
 b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
-ax.scatter(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
-#ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+#ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
+ax.scatter(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
 plt.show()
 
