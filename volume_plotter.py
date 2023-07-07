@@ -66,7 +66,7 @@ ax.contourf(X[mask_X], Y[mask_Y], height_values[mask_Y][:,mask_X], cmap="rainbow
 #ax.contourf(X[mask_X], Z[mask_Z], height_values[mask_Z][:,mask_X], cmap="rainbow") # plotting (x,z) plane
 
 # Optionally draw edge of applicator on plot
-# Only suorted for (x,y) plane
+# Only supported for (x,y) plane
 circle = plt.Circle((0,0), radius=radius, edgecolor="red", fill=False)
 ax.add_patch(circle)
 
