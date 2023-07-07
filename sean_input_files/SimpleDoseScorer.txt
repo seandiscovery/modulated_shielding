@@ -1,0 +1,94 @@
+#                                                          #
+#       Dose Scoring for Brachy Source in Applicator       #
+#	       Created - July 2022			    #
+#	       Author: Emily Draeger			    #
+#                                                          #
+
+##### Import the source inside the applicator ##### 
+includeFile = GammaMedSource_In_SMARTApp.txt
+#includeFile = Ir192_GammaMedPlus.txt
+#includeFile_169Yb_GammaMedPlus.txt
+
+
+d:Ge/World/HLX      = 10 cm
+d:Ge/World/HLY      = 10 cm
+d:Ge/World/HLZ      = 10 cm
+s:Ge/World/Material = "G4_WATER"
+
+
+##### Scorer geometry ######
+s:Ge/DoseGrid/Type       = "TsBox"
+s:Ge/DoseGrid/Parent     = "World"
+d:Ge/DoseGrid/HLX        =  2.505 cm
+d:Ge/DoseGrid/HLY        =  2.505 cm
+d:Ge/DoseGrid/HLZ        =  2.505 cm
+s:Ge/DoseGrid/Color      =  "red"
+b:Ge/DoseGrid/IsParallel = "T"
+i:Ge/DoseGrid/XBins      = 201
+i:Ge/DoseGrid/YBins      = 201
+i:Ge/DoseGrid/ZBins      = 201
+
+
+##### Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func #####
+s:Sc/DoseToPhantom/Quantity                   = "TrackLengthEstimator"
+sv:Sc/DoseToPhantom/Report                    = 1 "Sum" #3 "Sum" "Mean" "Standard_Deviation"
+s:Sc/DoseToPhantom/InputFile                  = "/home/sm3397/topas/examples/Brachytherapy/Muen.dat"
+s:Sc/DoseToPhantom/Component                  = "DoseGrid"
+b:Sc/DoseToPhantom/OutputToConsole            = "F"
+s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
+s:Sc/DoseToPhantom/OutputType                 = "csv"
+#b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
+s:Sc/DoseToPhantom/OutputFile                 = "test"
+#sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
+
+#s:Sc/DoseToPhantom2/Quantity                   = "TrackLengthEstimator"
+#sv:Sc/DoseToPhantom2/Report                    = 1 "Sum" 
+#s:Sc/DoseToPhantom2/InputFile                  = "/home/sm3397/topas/examples/Brachytherapy/Muen.dat"
+#s:Sc/DoseToPhantom2/Component                  = "DoseGrid"
+#b:Sc/DoseToPhantom2/OutputToConsole            = "F"
+#s:Sc/DoseToPhantom2/IfOutputFileAlreadyExists  = "Increment"
+#s:Sc/DoseToPhantom2/OutputType                 = "DICOM"
+#b:Sc/DoseToPhantom2/DICOMOutput32BitsPerPixel  = "True"
+#b:Sc/DoseToPhantom2/DICOMOutput32BitsPerPixel  = "True"
+#s:Sc/DoseToPhantom2/OutputFile                 = "test1"
+#sv:Sc/DoseToPhantom2/OnlyIncludeParticlesNamed = 1 "gamma"
+
+#s:Sc/DoseToPhantom2/Quantity                   = "TrackLengthEstimator"
+#sv:Sc/DoseToPhantom2/Report                    = 1 "Mean" 
+#s:Sc/DoseToPhantom2/InputFile                  = "/home/edraeger/topas/examples/Brachytherapy/Muen.dat"
+#s:Sc/DoseToPhantom2/Component                  = "DoseGrid"
+#b:Sc/DoseToPhantom2/OutputToConsole            = "F"
+#s:Sc/DoseToPhantom2/IfOutputFileAlreadyExists  = "Overwrite"
+#s:Sc/DoseToPhantom2/OutputType                 = "DICOM"
+#b:Sc/DoseToPhantom2/DICOMOutput32BitsPerPixel  = "True"
+#s:Sc/DoseToPhantom2/OutputFile                 = "SMARTApplicator_v2_mean"
+#sv:Sc/DoseToPhantom2/OnlyIncludeParticlesNamed = 1 "gamma"
+
+##### Local energy deposition of electrons
+d:Ph/Default/CutForElectron = 10 cm
+
+##### PHYSICS MODEL TO USE - this model was recommended in Berumen, Brachytherapy 20(2021) #####
+sv:Ph/Default/Modules = 1 "g4em-livermore"
+
+##### Number of Histories #####
+b:Gr/Enable = "T"
+i:So/ActiveSource/NumberOfHistoriesInRun = 1000000000
+i:Ts/ShowHistoryCountAtInterval = 1000000
+
+##### Graphics #####
+#b:Ts/PauseBeforeQuit = "T"
+#s:Gr/ViewA/Type        = "OpenGL"
+#b:Gr/ViewA/IncludeTrajectories = "False"
+#Ts/UseQt = "True"
+
+#Ts/UseQt = "True"
+#s:Gr/Graphic/Type = "OpenGL"
+#b:Gr/Graphic/IncludeGeometry = "True"
+#b:Gr/Graphic/IncludeTrajectories = "False"
+#b:Gr/Graphic/IncludeAxes = "True"
+#s:Gr/Graphic/AxesComponent = "World"
+#d:Gr/Grahic/AxesSize = 0.1 m
+
+#specify number of CPU to use.
+#i:Ts/NumberOfThreads = -1
+#b:Ts/ShowCPUTime = "True" # Show CPU time used in various phases of the simulation
