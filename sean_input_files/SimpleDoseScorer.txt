@@ -72,8 +72,8 @@ sv:Ph/Default/Modules = 1 "g4em-livermore"
 
 ##### Number of Histories #####
 b:Gr/Enable = "T"
-i:So/ActiveSource/NumberOfHistoriesInRun = 100000
-i:Ts/ShowHistoryCountAtInterval = 1000000
+i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:Ts/ShowHistoryCountAtInterval = 10000
 
 ##### Graphics #####
 #b:Ts/PauseBeforeQuit = "T"
