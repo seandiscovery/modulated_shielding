@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Import volume scorer file - comma delimited
-volume = np.genfromtxt("sean_input_files/test_2.csv", delimiter=",")
+volume = np.genfromtxt("../Outputs/SMART_Applicator_6channel_output.csv", delimiter=",")
 
 # Set dose grid parameters
-XBins = 201
-YBins = 201
-ZBins = 201
-dose_grid_half = 2.505 #1.005 # units = cm
+XBins = 51
+YBins = 51
+ZBins = 51
+dose_grid_half = 2.55 #2.505 #1.005 # units = cm
 
 # Compute lattice length
 latticeX = dose_grid_half*2/XBins
@@ -20,7 +20,7 @@ source_transZ = -0.5 # cm
 source_plane = int(ZBins/2) + int(source_transZ/latticeZ)
 
 # Define slice to be plotted
-const_plane = 100 # select constant plane between 0 and (X/Y/ZBins - 1)
+const_plane = 25 # select constant plane between 0 and (X/Y/ZBins - 1)
 #const_plane = source_plane # alternatively, select plane of source
 const_axis = 2 # 0 = x, 1 = y, 2 = z --> must be set to "2" if plotting plane of source
 
@@ -58,6 +58,7 @@ mask_Y = (Y > y0) & (Y < y1)
 #mask_Z = (Z > z0) & (Z < z1)
 
 height_values = np.transpose(np.reshape(plane[:,2], plane_tuple)) # should the matrix be transposed here?
+#std_dev_values = np.transpose(np.reshape(plane[:,3], plane_tuple)) # extract standard deviation values, if included in output
 
 fig, ax = plt.subplots()
 
