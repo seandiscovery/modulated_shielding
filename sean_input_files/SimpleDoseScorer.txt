@@ -24,21 +24,21 @@ d:Ge/DoseGrid/HLY        =  2.505 cm
 d:Ge/DoseGrid/HLZ        =  2.505 cm
 s:Ge/DoseGrid/Color      =  "red"
 b:Ge/DoseGrid/IsParallel = "T"
-i:Ge/DoseGrid/XBins      = 201
-i:Ge/DoseGrid/YBins      = 201
-i:Ge/DoseGrid/ZBins      = 201
+i:Ge/DoseGrid/XBins      = 51 #201
+i:Ge/DoseGrid/YBins      = 51 #201
+i:Ge/DoseGrid/ZBins      = 51 #201
 
 
 ##### Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func #####
 s:Sc/DoseToPhantom/Quantity                   = "TrackLengthEstimator"
-sv:Sc/DoseToPhantom/Report                    = 1 "Sum" #3 "Sum" "Mean" "Standard_Deviation"
-s:Sc/DoseToPhantom/InputFile                  = "/home/sm3397/topas/examples/Brachytherapy/Muen.dat"
+sv:Sc/DoseToPhantom/Report                    = 2 "Sum" "Standard_Deviation" #1 "Sum"
+s:Sc/DoseToPhantom/InputFile                  = "/Applications/topas/examples/Brachytherapy/Muen.dat"
 s:Sc/DoseToPhantom/Component                  = "DoseGrid"
 b:Sc/DoseToPhantom/OutputToConsole            = "F"
 s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
 s:Sc/DoseToPhantom/OutputType                 = "csv"
 #b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
-s:Sc/DoseToPhantom/OutputFile                 = "test"
+s:Sc/DoseToPhantom/OutputFile                 = "/Users/seanmullane/Desktop/Research_2023/Outputs/test"
 #sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
 
 #s:Sc/DoseToPhantom2/Quantity                   = "TrackLengthEstimator"
@@ -72,8 +72,8 @@ sv:Ph/Default/Modules = 1 "g4em-livermore"
 
 ##### Number of Histories #####
 b:Gr/Enable = "T"
-i:So/ActiveSource/NumberOfHistoriesInRun = 1000000000
-i:Ts/ShowHistoryCountAtInterval = 1000000
+i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:Ts/ShowHistoryCountAtInterval = 10000
 
 ##### Graphics #####
 #b:Ts/PauseBeforeQuit = "T"
