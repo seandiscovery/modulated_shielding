@@ -24,9 +24,9 @@ d:Ge/DoseGrid/HLY        =  2.505 cm
 d:Ge/DoseGrid/HLZ        =  2.505 cm
 s:Ge/DoseGrid/Color      =  "red"
 b:Ge/DoseGrid/IsParallel = "T"
-i:Ge/DoseGrid/XBins      = 51 #201
-i:Ge/DoseGrid/YBins      = 51 #201
-i:Ge/DoseGrid/ZBins      = 51 #201
+i:Ge/DoseGrid/XBins      = 201
+i:Ge/DoseGrid/YBins      = 201
+i:Ge/DoseGrid/ZBins      = 201
 
 
 ##### Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func #####
@@ -72,7 +72,7 @@ sv:Ph/Default/Modules = 1 "g4em-livermore"
 
 ##### Number of Histories #####
 b:Gr/Enable = "T"
-i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:So/ActiveSource/NumberOfHistoriesInRun = 10000000
 i:Ts/ShowHistoryCountAtInterval = 10000
 
 ##### Graphics #####
