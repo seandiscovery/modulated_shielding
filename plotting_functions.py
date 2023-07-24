@@ -39,9 +39,10 @@ def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 	return polar_plane
 
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
-	avg: bool=True) -> np.ndarray:
+	radius: float=0.0) -> tuple:
 	"""
 	Returns energy along an angle theta in range (0, pi].
+	To also return the energy at a constant radius, set parameter radius to be > 0.
 	"""
 	if theta <= 0 or theta > pi: raise ValueError("Parameter theta must be in range (0, pi] - use theta = pi to plot along x-axis")
 
@@ -68,7 +69,12 @@ def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: flo
 	mask_invert = (linear_energy[:,1] < (theta - pi) + err) & (linear_energy[:,1] > (theta - pi) - err)
 	linear_energy[:,0][mask_invert] *= -1
 
-	return linear_energy
+	eng_at_const_r = None
+	if radius > 0:
+		mask_radius = (polar[:,0] < radius + err) & (polar[:,0] > radius - err)
+		eng_at_const_r = polar[mask_radius]
+
+	return (linear_energy, eng_at_const_r)
 
 def average_energy(linear_energy: np.ndarray, std_dev: bool=False) -> np.ndarray:
 	"""
@@ -90,27 +96,32 @@ def average_energy(linear_energy: np.ndarray, std_dev: bool=False) -> np.ndarray
 
 	return eng_pos_r
 
-def plotter_1D(linear_energy: np.ndarray, plot_rng: tuple=(0,0), std_dev: bool=False, num_Hx: float=0.0, plot1: str="test.png", 
-	plot2: str="std_dev_test.png", verbose: bool=False) -> tuple:
+def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0), std_dev: bool=False, num_Hx: float=0.0, 
+	plot1: str="test.png", plot2: str="std_dev_test.png", verbose: bool=False, scatter: bool=False, save: bool=True) -> tuple:
 	"""
-	Plots energy along an angle theta.
+	Plots energy along an angle theta or energy at constant radius.
+
+	Parameters:
+		- ind_var --> sets independent variable of plot: 0 = radius, 1 = angle
 	"""
+
+	if ind_var > 1 or ind_var < 0: raise ValueError("Independent variable must be 0 = radius or 1 = angle")
 
 	if plot_rng[0] == plot_rng[1]:
 		# Plot entire range
-		r1 = np.min(linear_energy[:,0])
-		r2 = np.max(linear_energy[:,0])
+		r1 = np.min(linear_energy[:,ind_var])
+		r2 = np.max(linear_energy[:,ind_var])
 	else:
 		r1 = plot_rng[0]
 		r2 = plot_rng[1]
 	
-	b1 = (linear_energy[:,0] >= r1) & (linear_energy[:,0] <= r2)
+	b1 = (linear_energy[:,ind_var] >= r1) & (linear_energy[:,ind_var] <= r2)
 
 	fig1, ax1 = plt.subplots()
 	fig2, ax2 = plt.subplots()
 
 	yerr = None
-	std_dev_scatter = None
+	std_dev_of_sum = np.empty(np.shape(linear_energy[:,0]))
 
 	if std_dev:
 		if num_Hx == 0: raise ValueError("If plotting std dev, number of histories must be specified (cannot be zero)")
@@ -120,22 +131,25 @@ def plotter_1D(linear_energy: np.ndarray, plot_rng: tuple=(0,0), std_dev: bool=F
 		std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
 		yerr = std_dev_of_sum[b1]/2
 
-		std_dev_scatter = ax2.scatter(linear_energy[:,0], std_dev_of_sum)
+		std_dev_scatter = ax2.scatter(linear_energy[:,ind_var][b1], std_dev_of_sum[b1])
 		
-		fig2.savefig(plot2)
+		if save: fig2.savefig(plot2)
 
 		if verbose: print("Saved standard deviation scatter plot")
 
-	error_bar_container = ax1.errorbar(linear_energy[:,0][b1], linear_energy[:,2][b1], yerr=yerr, xerr=None)
+	fmt = ""
+	if scatter: fmt = "o"
 
-	fig1.savefig(plot1)
+	error_bar_container = ax1.errorbar(linear_energy[:,ind_var][b1], linear_energy[:,2][b1], yerr=yerr, xerr=None, fmt=fmt)
+
+	if save: fig1.savefig(plot1)
 
 	if verbose: print("Saved main plot")
 
-	return (error_bar_container, std_dev_scatter)
+	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], yerr)
 
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
-	source_rad: float, zero_source: bool=False) -> tuple:
+	source_rad: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 	"""
@@ -152,6 +166,8 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 	mask_Y = (Y > rng_Y[0]) & (Y < rng_Y[1])
 
 	if zero_source:
+		if source_rad == 0: raise ValueError("Source radius must be > 0 if zeroing source on contour plot")
+
 		plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
 		plane[:,1] = voxel_to_cm(plane[:,1], bins[1], dose_grid_half*2/bins[1])
 
@@ -162,4 +178,8 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	height_values = np.transpose(np.reshape(plane[:,2], bins))[mask_Y][:,mask_X]
 
-	return (X[mask_X], Y[mask_Y], height_values)
+	std_dev_values = None
+	if std_dev:
+		std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
+
+	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
