@@ -125,7 +125,6 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 
 	if std_dev:
 		if num_Hx == 0: raise ValueError("If plotting std dev, number of histories must be specified (cannot be zero)")
-
 		if np.shape(linear_energy)[1] < 3: raise ValueError("Input csv file does not contain std dev information")
 
 		std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
@@ -134,7 +133,6 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 		std_dev_scatter = ax2.scatter(linear_energy[:,ind_var][b1], std_dev_of_sum[b1])
 		
 		if save: fig2.savefig(plot2)
-
 		if verbose: print("Saved standard deviation scatter plot")
 
 	fmt = ""
@@ -143,7 +141,6 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	error_bar_container = ax1.errorbar(linear_energy[:,ind_var][b1], linear_energy[:,2][b1], yerr=yerr, xerr=None, fmt=fmt)
 
 	if save: fig1.savefig(plot1)
-
 	if verbose: print("Saved main plot")
 
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], yerr)

@@ -37,7 +37,7 @@ for i in range(np.shape(files)[0]):
 	# If plotting an arbitrary z plane, use "z_slices[i]" as fifth argument
 	# If plotting plane of source, use "source_plane" as fifth argument
 	eng_at_const_theta, eng_at_const_r = energy_along_theta(files[i], angle, (num_bins[i], num_bins[i]), dose_grid_half[i], 
-		source_plane, err=0.1, radius=radius)
+		source_plane, err=0.01, radius=radius)
 
 	plot1_name = f"plot_{'%.2E' % Decimal(num_Hx[i])}_{num_bins[i]}_{dose_grid_half[i]}.png"
 	plot2_name = f"std_dev_plot_{'%.2E' % Decimal(num_Hx[i])}_{num_bins[i]}_{dose_grid_half[i]}.png"
@@ -57,7 +57,7 @@ for i in range(np.shape(files)[0]):
 	Don't forget to adjust the plot title when changing the independent variable!
 	"""
 	eng_to_plot = eng_at_const_r
-	plot_tuple = plotter_1D(eng_to_plot, ind_var=1, plot_rng=(pi/2, pi), std_dev=True, num_Hx=num_Hx[i], 
+	plot_tuple = plotter_1D(eng_to_plot, ind_var=1, plot_rng=(0, pi), std_dev=True, num_Hx=num_Hx[i], 
 		plot1=plot1_name, plot2=plot2_name, verbose=True, scatter=True, save=False)
 
 	energy_storage.append(plot_tuple)
@@ -74,9 +74,10 @@ for i in range(len(energy_storage)):
 ax1.legend(handles=line_handles)
 ax1.set_title("Std dev vs theta, radius = 0.3 cm")
 
-#fig1.savefig("std_dev_trend.png")
+fig1.savefig("std_dev_trend.png")
 
 ### Step 2: contour plot of standard deviation across applicator ###
+"""
 x_range = (0.3, 0.8)
 y_range = (-0.25, 0.25)
 source_rad = 0.03
@@ -95,3 +96,4 @@ for i in range(np.shape(files)[0]):
 
 	ax2.set_title(plot_labels[i])
 	fig2.savefig(plot_labels[i])
+"""
