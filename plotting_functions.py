@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi
+from decimal import Decimal
 
 """
 Suite of functions to process data from TOPAS simulations. 
@@ -96,10 +97,9 @@ def average_energy(linear_energy: np.ndarray, std_dev: bool=False) -> np.ndarray
 
 	return eng_pos_r
 
-def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0), std_dev: bool=False, num_Hx: float=0.0, 
-	plot1: str="test.png", plot2: str="std_dev_test.png", verbose: bool=False, scatter: bool=False, save: bool=True) -> tuple:
+def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0), std_dev: bool=False, num_Hx: float=0.0) -> tuple:
 	"""
-	Plots energy along an angle theta or energy at constant radius.
+	Constructs numpy arrays to plot energy or std dev as a function of radius/angle.
 
 	Parameters:
 		- ind_var --> sets independent variable of plot: 0 = radius, 1 = angle
@@ -117,9 +117,6 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	
 	b1 = (linear_energy[:,ind_var] >= r1) & (linear_energy[:,ind_var] <= r2)
 
-	fig1, ax1 = plt.subplots()
-	fig2, ax2 = plt.subplots()
-
 	yerr = None
 	std_dev_of_sum = np.empty(np.shape(linear_energy[:,0]))
 
@@ -129,19 +126,6 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 
 		std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
 		yerr = std_dev_of_sum[b1]/2
-
-		std_dev_scatter = ax2.scatter(linear_energy[:,ind_var][b1], std_dev_of_sum[b1])
-		
-		if save: fig2.savefig(plot2)
-		if verbose: print("Saved standard deviation scatter plot")
-
-	fmt = ""
-	if scatter: fmt = "o"
-
-	error_bar_container = ax1.errorbar(linear_energy[:,ind_var][b1], linear_energy[:,2][b1], yerr=yerr, xerr=None, fmt=fmt)
-
-	if save: fig1.savefig(plot1)
-	if verbose: print("Saved main plot")
 
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], yerr)
 
