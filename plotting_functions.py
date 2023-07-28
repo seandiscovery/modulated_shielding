@@ -15,7 +15,7 @@ def cm_to_voxel(cm: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts Cartesian space to voxel space. Inverse of voxel_to_cm.
 	"""
-	return int(bins/2) + int(cm/lattice)
+	return int(bins/2) + (cm/lattice).astype(int)
 
 def voxel_to_cm(voxels: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
@@ -39,8 +39,29 @@ def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 
 	return polar_plane
 
+def norm_energy(plane: np.ndarray, norm_point: tuple, bins: int, lattice: float) -> np.ndarray:
+	"""
+	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
+	Assumes XBins = YBins.
+	"""
+	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
+	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
+
+	norm_energy = plane[mask][0][2]
+	plane[:,2] = (plane[:,2]/norm_energy)*100
+
+	return plane
+
+def norm_energy_debug(plane: np.ndarray, norm_point: tuple, bins: int, lattice: float) -> np.ndarray:
+	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
+	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
+
+	norm_energy = plane[mask][0][2]
+
+	return (norm_energy, norm_point_voxel)
+
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
-	radius: float=0.0) -> tuple:
+	radius: float=0.0, scale: bool=False, norm_point: tuple=(0.0, 0.0)) -> tuple:
 	"""
 	Returns energy along an angle theta in range (0, pi].
 	To also return the energy at a constant radius, set parameter radius to be > 0.
@@ -52,6 +73,10 @@ def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: flo
 
 	plane = volume[volume[:,2] == z_slice]
 	plane = np.delete(plane, 2, 1)
+
+	if scale:
+		# Assumes XBins = YBins
+		plane = norm_energy(plane, norm_point, bins[0], dose_grid_half*2/bins[0])
 
 	# Transform voxel space ---> Cartesian space
 	plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
@@ -119,18 +144,20 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 
 	yerr = None
 	std_dev_of_sum = np.empty(np.shape(linear_energy[:,0]))
+	std_dev_of_mean = np.empty(np.shape(linear_energy[:,0]))
 
 	if std_dev:
 		if num_Hx == 0: raise ValueError("If plotting std dev, number of histories must be specified (cannot be zero)")
 		if np.shape(linear_energy)[1] < 3: raise ValueError("Input csv file does not contain std dev information")
 
 		std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
+		std_dev_of_mean = linear_energy[:,3]/np.sqrt(num_Hx)
 		yerr = std_dev_of_sum[b1]/2
 
-	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], yerr)
+	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], std_dev_of_mean[b1], yerr)
 
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
-	source_rad: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
+	source_rad: float=0.0, scale: bool=False, norm_point: tuple=(0.0, 0.0), zero_source: bool=False, std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 	"""
@@ -138,6 +165,10 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	plane = volume[volume[:,const_axis] == const_plane]
 	plane = np.delete(plane, const_axis, 1)
+
+	if scale:
+		# Assumes XBins = YBins
+		plane = norm_energy(plane, norm_point, bins[0], dose_grid_half*2/bins[0])
 
 	# Using (X, Y) notation here, but could be (X, Z) or (Y, Z) as well
 	X = voxel_to_cm(np.arange(0,bins[0]), bins[0], dose_grid_half*2/bins[0])
