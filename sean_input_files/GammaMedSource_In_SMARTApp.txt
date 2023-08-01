@@ -22,7 +22,8 @@ sv:Ph/Default/LayeredMassGeometryWorlds =  5 "TandemWorld" "ChannelWorld" "Shiel
 
 ##### Position source in applicator air channel - original Z at tip of tandem is -22.557 ####
 d:Ge/Source/TransZ = -5.0 mm
-d:Ge/Source/TransY = 1.8 mm # location = inside channel 1
+d:Ge/Source/TransY = 0.0 mm # location = inside air channel (center of applicator)
+#d:Ge/Source/TransY = 1.8 mm # location = inside channel 1
 #d:Ge/Source/TransY = 2.2 mm #UCSF offset
 #d:Ge/Source/TransY = 2.32 mm #UCSF multirod applicator, offset for 12 o'clock rod
 

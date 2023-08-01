@@ -1,27 +1,30 @@
 # One-dimensional plotter for TOPAS outputs - arbitrary angle
 # Note that input angles must be in the half-open interval (0, pi]
+# Assumes input file of format X, Y, Z, Sum, Standard_Deviation
 # Author: Sean Mullane
 
 import numpy as np 
 import matplotlib.pyplot as plt
 from math import pi
+from plotting_functions import *
 
-volume = np.genfromtxt("../Outputs/SMART_6channel_allBlocked_W_fine_201bins.csv", delimiter=",")
+volume = np.genfromtxt("../Outputs/1e6_test.csv", delimiter=",")
 
 # Define vector to plot - inputs must be in half-open interval (0, pi]
 theta = pi
 
 # Set parameters
 # This script assume cubic bins i.e. XBins = YBins = ZBins
-XBins = 201
-YBins = 201
-ZBins = 201
-dose_grid_half = 1.005 # units = cm
+num_Hx = 1e7
+XBins = 51
+YBins = 51
+ZBins = 51
+dose_grid_half = 1.25 #2.55 #1.005 # units = cm
 plot_axis = 0 # set axis to plot against (0 = r, 1 = theta)
 const_axis = 1 # constant axis
 err = 0.001 # set error for plotting along theta
 
-z_slice = 80 # select z plane between 0 and (ZBins - 1)
+z_slice = 25 # select z plane between 0 and (ZBins - 1)
 
 xy_plane = volume[volume[:,2] == z_slice]
 xy_plane = np.delete(xy_plane, 2, 1)
@@ -33,10 +36,14 @@ xy_rescaled = (xy_plane[:,[0,1]] - int(XBins/2))*lattice
 xy_plane[:,[0,1]] = xy_rescaled
 
 # Transform Cartesian to polar coordinates
+xy_polar = cart_to_polar(xy_plane)
+"""
 xy_polar = np.empty(np.shape(xy_plane))
 xy_polar[:,0] = np.sqrt(xy_plane[:,0]**2 + xy_plane[:,1]**2) # (x, y) --> r
 xy_polar[:,1] = np.arctan2(xy_plane[:,1], xy_plane[:,0]) # (x, y) --> theta
 xy_polar[:,2] = xy_plane[:,2] # energy
+xy_polar[:,3] = xy_plane[:,3] # std dev
+"""
 
 # Extract (r, theta, E) values along line defined by theta
 mask_theta = (xy_polar[:,const_axis] < theta + err) & (xy_polar[:,const_axis] > theta - err) # assumes theta = constant 
@@ -48,6 +55,8 @@ linear_energy = xy_polar[(mask_theta + mask_pi)]
 mask_invert = (linear_energy[:,const_axis] < (theta - pi) + err) & (linear_energy[:,const_axis] > (theta - pi) - err)
 linear_energy[:,0][mask_invert] *= -1
 
+std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
+
 # Optionally plot a range (r1, r2)
 # Units = cm
 r1 = 0.3
@@ -56,6 +65,10 @@ b1 = (linear_energy[:,plot_axis] > r1) & (linear_energy[:,plot_axis] < r2)
 
 fix, ax = plt.subplots()
 #ax.plot(linear_energy[:,plot_axis], linear_energy[:,2]) # plot entire range
-ax.scatter(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+#ax.plot(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1]) # plot [r1, r2]
+#ax.scatter(linear_energy[:,plot_axis], std_dev_of_sum, color="red")
+
+ax.errorbar(linear_energy[:,plot_axis][b1], linear_energy[:,2][b1], yerr=(std_dev_of_sum[b1]/2), xerr=None)
+
 plt.show()
 
