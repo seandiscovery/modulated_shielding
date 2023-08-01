@@ -24,9 +24,9 @@ d:Ge/DoseGrid/HLY        =  1.25 cm #2.505 cm
 d:Ge/DoseGrid/HLZ        =  1.25 cm #2.505 cm
 s:Ge/DoseGrid/Color      =  "red"
 b:Ge/DoseGrid/IsParallel = "T"
-i:Ge/DoseGrid/XBins      = 51
-i:Ge/DoseGrid/YBins      = 51
-i:Ge/DoseGrid/ZBins      = 51
+i:Ge/DoseGrid/XBins      = 25
+i:Ge/DoseGrid/YBins      = 25
+i:Ge/DoseGrid/ZBins      = 25
 
 ##### Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func #####
 s:Sc/DoseToPhantom/Quantity                   = "TrackLengthEstimator"
@@ -37,7 +37,7 @@ b:Sc/DoseToPhantom/OutputToConsole            = "F"
 s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
 s:Sc/DoseToPhantom/OutputType                 = "csv"
 #b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
-s:Sc/DoseToPhantom/OutputFile                 = "/Users/seanmullane/Desktop/Research_2023/Outputs/1e6_test"
+s:Sc/DoseToPhantom/OutputFile                 = "bash_scripting_test"
 #sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
 
 #s:Sc/DoseToPhantom2/Quantity                   = "TrackLengthEstimator"
@@ -71,7 +71,7 @@ sv:Ph/Default/Modules = 1 "g4em-livermore"
 
 ##### Number of Histories #####
 b:Gr/Enable = "T"
-i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:So/ActiveSource/NumberOfHistoriesInRun = 100000
 i:Ts/ShowHistoryCountAtInterval = 10000
 
 ##### Graphics #####
