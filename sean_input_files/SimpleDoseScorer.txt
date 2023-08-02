@@ -90,4 +90,5 @@ i:Ts/ShowHistoryCountAtInterval = 10000
 
 #specify number of CPU to use.
 #i:Ts/NumberOfThreads = -1
-#b:Ts/ShowCPUTime = "True" # Show CPU time used in various phases of the simulation
+b:Ts/ShowCPUTime = "True" # Show CPU time used in various phases of the simulation
+i:Ts/TrackingVerbosity = 0
