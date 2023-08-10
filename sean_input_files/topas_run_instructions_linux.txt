@@ -1,9 +1,0 @@
-## TOPAS running instructions: Linux ##
-
-export TOPAS_G4_DATA_DIR=~/G4Data
-
-Navigate to folder with TOPAS txt file
-/home/sm3397/topas/bin/topas << txt file >>
-
-Activate python venv: .\env\Scripts\activate
-Deactivate: deactivate
