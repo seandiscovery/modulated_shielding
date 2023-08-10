@@ -11,6 +11,14 @@ Note: this file makes heavy use of Boolean indexing to efficiently extract infor
 If unfamiliar with Boolean indexing, see: https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing
 """
 
+def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
+	volume = np.genfromtxt(file, delimiter=",")
+
+	plane = volume[volume[:,const_axis] == const_plane]
+	plane = np.delete(plane, const_axis, 1)
+
+	return plane
+
 def cm_to_voxel(cm: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts Cartesian space to voxel space. Inverse of voxel_to_cm.
@@ -39,20 +47,9 @@ def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 
 	return polar_plane
 
-def norm_energy(plane: np.ndarray, norm_point: tuple, bins: int, lattice: float) -> np.ndarray:
-	"""
-	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
-	Assumes XBins = YBins.
-	"""
-	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
-	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
+def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float) -> tuple:
+	plane = generate_plane(file, const_plane, const_axis)
 
-	norm_energy = plane[mask][0][2]
-	plane[:,2] = (plane[:,2]/norm_energy)*100
-
-	return plane
-
-def norm_energy_debug(plane: np.ndarray, norm_point: tuple, bins: int, lattice: float) -> np.ndarray:
 	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
 	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
 
@@ -60,8 +57,17 @@ def norm_energy_debug(plane: np.ndarray, norm_point: tuple, bins: int, lattice: 
 
 	return (norm_energy, norm_point_voxel)
 
+def normalize_energy(plane: np.ndarray, norm_energy: float) -> np.ndarray:
+	"""
+	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
+	Assumes XBins = YBins.
+	"""
+	plane[:,2] = (plane[:,2]/norm_energy)*100
+
+	return plane
+
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
-	radius: float=0.0, scale: bool=False, norm_point: tuple=(0.0, 0.0)) -> tuple:
+	radius: float=0.0, scale: bool=False, norm_energy: float=0.0) -> tuple:
 	"""
 	Returns energy along an angle theta in range (0, pi].
 	To also return the energy at a constant radius, set parameter radius to be > 0.
@@ -75,8 +81,8 @@ def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: flo
 	plane = np.delete(plane, 2, 1)
 
 	if scale:
-		# Assumes XBins = YBins
-		plane = norm_energy(plane, norm_point, bins[0], dose_grid_half*2/bins[0])
+		if norm_energy == 0: raise ValueError("norm_energy cannot be 0 if scaling energy values")
+		plane = normalize_energy(plane, norm_energy)
 
 	# Transform voxel space ---> Cartesian space
 	plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
@@ -157,18 +163,15 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], std_dev_of_mean[b1], yerr)
 
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
-	source_rad: float=0.0, scale: bool=False, norm_point: tuple=(0.0, 0.0), zero_source: bool=False, std_dev: bool=False) -> tuple:
+	source_rad: float=0.0, scale: bool=False, norm_energy: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 	"""
-	volume = np.genfromtxt(file, delimiter=",")
-
-	plane = volume[volume[:,const_axis] == const_plane]
-	plane = np.delete(plane, const_axis, 1)
+	plane = generate_plane(file, const_plane, const_axis)
 
 	if scale:
-		# Assumes XBins = YBins
-		plane = norm_energy(plane, norm_point, bins[0], dose_grid_half*2/bins[0])
+		if norm_energy == 0: raise ValueError("norm_energy cannot be 0 if scaling energy values")
+		plane = normalize_energy(plane, norm_energy)
 
 	# Using (X, Y) notation here, but could be (X, Z) or (Y, Z) as well
 	X = voxel_to_cm(np.arange(0,bins[0]), bins[0], dose_grid_half*2/bins[0])
