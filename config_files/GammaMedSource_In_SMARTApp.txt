@@ -5,8 +5,8 @@
 #                                                          #
 
 ##### IMPORT SOURCE AND APPLICATOR #####
-includeFile = 169Yb_GammaMedPlus.txt
-#includeFile = Ir192_GammaMedPlus.txt
+#includeFile = 169Yb_GammaMedPlus.txt
+includeFile = Ir192_GammaMedPlus.txt
 #includeFile = SMART_Applicator_v4.txt
 #includeFile = SMART_Applicator_CenteralPeripheryTest.txt
 #includeFile = SMART_Applicator_6channel.txt
@@ -15,10 +15,9 @@ includeFile = UCSF_peripheral_applicator.txt
 
 #sv:Ph/Default/LayeredMassGeometryWorlds =  5 "TandemWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
 
-sv:Ph/Default/LayeredMassGeometryWorlds =  6 "TandemWorld" "BoxWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
+#sv:Ph/Default/LayeredMassGeometryWorlds =  6 "TandemWorld" "BoxWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
 
-#sv:Ph/Default/LayeredMassGeometryWorlds =  4 "TandemWorld" "ChannelWorld" "ShieldingWorld" "ActiveSourceWorld" 
-
+sv:Ph/Default/LayeredMassGeometryWorlds =  5 "TandemWorld" "BoxWorld" "ChannelWorld" "ShieldingWorld" "ActiveSourceWorld" 
 
 ##### Position source in applicator air channel - original Z at tip of tandem is -22.557 ####
 d:Ge/Source/TransZ = -5.0 mm

@@ -11,7 +11,7 @@
 
 ## Sean edits 06/13/2023 ##
 
-# Ts/UseQt = "True" # activate GUI
+#Ts/UseQt = "True" # activate GUI
 
 ##### Define Tungsten #####
 sv:Ma/BlockTungsten/Components = 1 "Tungsten" 
