@@ -23,7 +23,7 @@ def cm_to_voxel(cm: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts Cartesian space to voxel space. Inverse of voxel_to_cm.
 	"""
-	return int(bins/2) + (cm/lattice).astype(int)
+	return (int(bins/2) + (cm/lattice).round()).astype(int)
 
 def voxel_to_cm(voxels: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
