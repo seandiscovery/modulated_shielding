@@ -11,6 +11,8 @@ Note: this file makes heavy use of Boolean indexing to efficiently extract infor
 If unfamiliar with Boolean indexing, see: https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing
 """
 
+#### Plotting helper functions ####
+
 def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
 	volume = np.genfromtxt(file, delimiter=",")
 
@@ -65,6 +67,8 @@ def normalize_energy(plane: np.ndarray, norm_energy: float) -> np.ndarray:
 	plane[:,2] = (plane[:,2]/norm_energy)*100
 
 	return plane
+
+#### Plotting functions ####
 
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
 	radius: float=0.0, scale: bool=False, norm_energy: float=0.0) -> tuple:
@@ -198,3 +202,74 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 		std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
 
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
+
+#### Rotation functions ####
+
+def twoD_rot(theta: float) -> np.ndarray:
+    return np.array([[np.cos(theta), -1*np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
+def rot_mapping(holding: set, rot_voxel: tuple) -> tuple:
+    # is rot_voxel in holding?
+    # no ---> new voxel = rot_voxel
+    # yes --> check rot_voxel[0] + 1, rot_voxel[0] - 1, etc. until empty voxel found
+    # return empty voxel for assignment
+    
+    if not (rot_voxel in holding):
+        empty_vox = rot_voxel
+
+    # Check along x +/- 1, y +/- 1
+    elif not ((rot_voxel[0] + 1, rot_voxel[1]) in holding):
+        empty_vox = (rot_voxel[0] + 1, rot_voxel[1])
+
+    elif not ((rot_voxel[0], rot_voxel[1] - 1) in holding):
+        empty_vox = (rot_voxel[0], rot_voxel[1] - 1)
+
+    elif not ((rot_voxel[0] - 1, rot_voxel[1]) in holding):
+        empty_vox = (rot_voxel[0] - 1, rot_voxel[1])
+
+    elif not ((rot_voxel[0], rot_voxel[1] + 1) in holding):
+        empty_vox = (rot_voxel[0], rot_voxel[1] + 1)
+
+    # Check four corners
+    elif not ((rot_voxel[0] + 1, rot_voxel[1] + 1) in holding):
+        empty_vox = (rot_voxel[0] + 1, rot_voxel[1] + 1)
+
+    elif not ((rot_voxel[0] + 1, rot_voxel[1] - 1) in holding):
+        empty_vox = (rot_voxel[0] + 1, rot_voxel[1] - 1)
+
+    elif not ((rot_voxel[0] - 1, rot_voxel[1] - 1) in holding):
+        empty_vox = (rot_voxel[0] - 1, rot_voxel[1] - 1)
+
+    elif not ((rot_voxel[0] - 1, rot_voxel[1] + 1) in holding):
+        empty_vox = (rot_voxel[0] - 1, rot_voxel[1] + 1)
+
+    else:
+        raise ValueError("No empty voxel found for " + str(rot_voxel))
+
+    return empty_vox
+
+def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, dose_grid_half: float, lattice: float) -> np.ndarray:
+	rotation = np.zeros(np.shape(energy))
+	holding = set()
+
+	rot = twoD_rot(angle)
+
+	for i in np.arange(0, np.shape(X)[0]):
+    	for j in np.arange(0, np.shape(Y)[0]):
+	        vector = np.array([X[i], Y[j]])
+
+	        if np.linalg.norm(vector) <= dose_grid_half - lattice:
+	            height = energy[i][j]
+
+	            rotated_vec = rot @ vector
+
+	            rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
+
+	            # Note that we convert rotated_voxel to a tuple
+	            rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
+
+	            rotation[rotated_voxel[0]][rotated_voxel[1]] = height
+
+	            holding.add((rotated_voxel[0], rotated_voxel[1]))
+
+	return rotation
