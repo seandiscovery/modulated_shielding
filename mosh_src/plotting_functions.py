@@ -255,7 +255,7 @@ def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float,
 	rot = twoD_rot(angle)
 
 	for i in np.arange(0, np.shape(X)[0]):
-    	for j in np.arange(0, np.shape(Y)[0]):
+		for j in np.arange(0, np.shape(Y)[0]):
 	        vector = np.array([X[i], Y[j]])
 
 	        if np.linalg.norm(vector) <= dose_grid_half - lattice:
