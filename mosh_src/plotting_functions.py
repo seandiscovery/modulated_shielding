@@ -256,20 +256,20 @@ def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float,
 
 	for i in np.arange(0, np.shape(X)[0]):
 		for j in np.arange(0, np.shape(Y)[0]):
-	        vector = np.array([X[i], Y[j]])
+			vector = np.array([X[i], Y[j]])
 
-	        if np.linalg.norm(vector) <= dose_grid_half - lattice:
-	            height = energy[i][j]
+			if np.linalg.norm(vector) <= dose_grid_half - lattice:
+				height = energy[i][j]
 
-	            rotated_vec = rot @ vector
+				rotated_vec = rot @ vector
 
-	            rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
+				rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
 
-	            # Note that we convert rotated_voxel to a tuple
-	            rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
+				# Note that we convert rotated_voxel to a tuple
+				rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
 
-	            rotation[rotated_voxel[0]][rotated_voxel[1]] = height
+				rotation[rotated_voxel[0]][rotated_voxel[1]] = height
 
-	            holding.add((rotated_voxel[0], rotated_voxel[1]))
+				holding.add((rotated_voxel[0], rotated_voxel[1]))
 
 	return rotation
