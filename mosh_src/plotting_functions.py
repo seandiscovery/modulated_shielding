@@ -248,17 +248,26 @@ def rot_mapping(holding: set, rot_voxel: tuple) -> tuple:
 
     return empty_vox
 
-def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, dose_grid_half: float, lattice: float) -> np.ndarray:
+def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, bins: int, rngX: tuple, 
+	lattice: float) -> np.ndarray:
+	"""
+	Rotates the input energy array by theta. 
+	Assumes that the energy array is square, i.e. rngX = rngY
+	"""
 	rotation = np.zeros(np.shape(energy))
 	holding = set()
 
 	rot = twoD_rot(angle)
 
+	dose_grid_half = (rngX[1] - rngX[0])/2
+
+	buffer = 1.5*np.sqrt(2)*lattice # still getting out-of-bound errors, even with this padding
+
 	for i in np.arange(0, np.shape(X)[0]):
 		for j in np.arange(0, np.shape(Y)[0]):
 			vector = np.array([X[i], Y[j]])
 
-			if np.linalg.norm(vector) <= dose_grid_half - lattice:
+			if np.linalg.norm(vector) <= dose_grid_half - buffer:
 				height = energy[i][j]
 
 				rotated_vec = rot @ vector
@@ -268,8 +277,42 @@ def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float,
 				# Note that we convert rotated_voxel to a tuple
 				rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
 
+				# Check that rotated voxel is inside inscribed circle before assigning to rotation tensor?
+
 				rotation[rotated_voxel[0]][rotated_voxel[1]] = height
 
+				holding.add((rotated_voxel[0], rotated_voxel[1]))
+
+	return rotation
+
+def rotate_array_updated(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, bins: int, lattice: float) -> np.ndarray:
+	"""
+	Checking for out-of-bounds in a different way. Possibly slower runtime?
+	"""
+	rotation = np.zeros(np.shape(energy))
+	holding = set()
+
+	rot = twoD_rot(angle)
+
+	#dose_grid_half = (rngX[1] - rngX[0])/2 # not needed in this implementation
+
+	#buffer = 1.5*np.sqrt(2)*lattice # not needed in this implementation
+
+	for i in np.arange(0, np.shape(X)[0]):
+		for j in np.arange(0, np.shape(Y)[0]):
+			vector = np.array([X[i], Y[j]])
+
+			height = energy[i][j]
+
+			rotated_vec = rot @ vector
+ 
+			rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
+
+			# Note that we convert rotated_voxel to a tuple
+			rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
+
+			if (rotated_voxel[0] < np.shape(X)[0]) and (rotated_voxel[1] < np.shape(Y)[0]):	
+				rotation[rotated_voxel[0]][rotated_voxel[1]] = height
 				holding.add((rotated_voxel[0], rotated_voxel[1]))
 
 	return rotation
