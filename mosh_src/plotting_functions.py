@@ -5,7 +5,7 @@ from decimal import Decimal
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June - August 2023
+Author: Sean Mullane, June - November 2023
 
 Note: this file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
 If unfamiliar with Boolean indexing, see: https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing
@@ -59,34 +59,31 @@ def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point
 
 	return (norm_energy, norm_point_voxel)
 
-def normalize_energy(plane: np.ndarray, norm_energy: float) -> np.ndarray:
+def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.ndarray:
 	"""
 	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
 	Assumes XBins = YBins.
 	"""
-	plane[:,2] = (plane[:,2]/norm_energy)*100
+	# Scale energy and standard deviation values
+	plane[:,2:] = (plane[:,2:]/norm_energy)*dose
 
 	return plane
 
 #### Plotting functions ####
 
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
-	radius: float=0.0, scale: bool=False, norm_energy: float=0.0) -> tuple:
+	radius: float=0.0, scale: bool=False, norm_energy: float=0.0, dose: float=0.0) -> tuple:
 	"""
 	Returns energy along an angle theta in range (0, pi].
 	To also return the energy at a constant radius, set parameter radius to be > 0.
 	"""
 	if theta <= 0 or theta > pi: raise ValueError("Parameter theta must be in range (0, pi] - use theta = pi to plot along x-axis")
 
-	# Extract plane of plot
-	volume = np.genfromtxt(file, delimiter=",")
-
-	plane = volume[volume[:,2] == z_slice]
-	plane = np.delete(plane, 2, 1)
+	plane = generate_plane(file, z_slice, 2)
 
 	if scale:
-		if norm_energy == 0: raise ValueError("norm_energy cannot be 0 if scaling energy values")
-		plane = normalize_energy(plane, norm_energy)
+		if (norm_energy == 0) or (dose == 0): raise ValueError("norm_energy and/or dose cannot be 0 if scaling energy values")
+		plane = normalize_energy(plane, norm_energy, dose)
 
 	# Transform voxel space ---> Cartesian space
 	plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
@@ -167,15 +164,15 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], std_dev_of_mean[b1], yerr)
 
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
-	source_rad: float=0.0, scale: bool=False, norm_energy: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
+	source_rad: float=0.0, scale: bool=False, norm_energy: float=0.0, dose: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 	"""
 	plane = generate_plane(file, const_plane, const_axis)
 
 	if scale:
-		if norm_energy == 0: raise ValueError("norm_energy cannot be 0 if scaling energy values")
-		plane = normalize_energy(plane, norm_energy)
+		if (norm_energy == 0) or (dose == 0): raise ValueError("norm_energy and/or dose cannot be 0 if normalizing energy values")
+		plane = normalize_energy(plane, norm_energy, dose)
 
 	# Using (X, Y) notation here, but could be (X, Z) or (Y, Z) as well
 	X = voxel_to_cm(np.arange(0,bins[0]), bins[0], dose_grid_half*2/bins[0])
@@ -194,14 +191,51 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 		polar_mask = polar_plane[:,0] <= source_rad
 
 		plane[:,2][polar_mask] *= 0
-
-	height_values = np.transpose(np.reshape(plane[:,2], bins))[mask_Y][:,mask_X]
+	
+	#height_values = np.transpose(np.reshape(plane[:,2], bins))[mask_Y][:,mask_X] # DEPRECATED
+	height_values = np.reshape(plane[:,2], bins)[mask_X][:,mask_Y]
 
 	std_dev_values = None
 	if std_dev:
 		std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
 
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
+
+def contour_normalization(energy: np.ndarray, dose: float, roi_cm: tuple, bins: int, lattice: float) -> np.ndarray:
+	"""
+	DEPRECATED - but keeping until confirm that simpler normalization code is correct
+
+	Normalize the energy values of the simulation to a prescription energy value at a particular ROI
+
+	roi_cm units = real space (cm)
+
+	Use with caution - if roi_cm is chosen inside an area w/zeroed energy, will encounter divide-by-zero error
+	"""
+	roi_point_voxel = cm_to_voxel(np.array(roi_cm), bins, lattice)
+	dose_point = energy[roi_point_voxel[0], roi_point_voxel[1]]
+	print(dose_point) # debug
+	print(roi_point_voxel) # debug
+
+	normalized_energy = (energy/dose_point)*dose
+
+	"""
+	# Deprecated method - above is simpler + reduces probability of divide-by-zero error
+
+	mask = energy > 0
+	scaling_factors = np.zeros(np.shape(energy))
+
+	it = np.nditer(mask, flags=['multi_index'])
+	for x in it:
+		if x:
+			scaling_factors[it.multi_index] = dose_point/energy[it.multi_index]
+		else:
+			scaling_factors[it.multi_index] = np.inf
+
+	normalized_energy = dose/scaling_factors
+
+	"""
+	
+	return normalized_energy
 
 #### Rotation functions ####
 
