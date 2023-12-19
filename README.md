@@ -1,3 +1,2 @@
-# modulated_shielding
-Modulated shielding (MOSH) brachytherapy for the treatment of cervical cancer
-
+# Modulated Shielding
+This repository contains code to process data from TOPAS simulations using the modulated shielding (MOSH) brachytherapy applicator. To get started, check out the file `mosh_tutorial.py`, which contains a tutorial on basic use of the plotting functions included in `mosh_src/plotting_functions.py`. 
