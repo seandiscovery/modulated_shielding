@@ -1,21 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 from math import pi
 from decimal import Decimal
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June - November 2023
+Author: Sean Mullane, June - December 2023
 
-Note: this file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
-If unfamiliar with Boolean indexing, see: https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing
+Notes: 
+	- This file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
+	If unfamiliar with Boolean indexing, see: https://numpy.org/doc/stable/user/basics.indexing.html#boolean-array-indexing
+	
+	- All functions in this file assume Xbins = Ybins.
 """
 
 #### Plotting helper functions ####
 
 def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
+	"""
+	Extracts a two-dimensional plane from a three-dimensional TOPAS csv file.
+	
+	Parameters:
+		- file: str - input csv file
+		- const_plane: int - specifies the voxel that is held constant when extracting plane
+		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
+
+	Returns:
+		- numpy array with columns (x, y, energy, std_dev) 
+	"""
 	volume = np.genfromtxt(file, delimiter=",")
 
+	# volume has columns (x, y, z, energy, std_dev)
 	plane = volume[volume[:,const_axis] == const_plane]
 	plane = np.delete(plane, const_axis, 1)
 
@@ -24,19 +40,41 @@ def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
 def cm_to_voxel(cm: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts Cartesian space to voxel space. Inverse of voxel_to_cm.
+
+	Parameters:
+		- cm: np.ndarray - numpy array specifying distances (in cm) for conversion
+		- bins: int - number of bins from the simulation
+		- lattice: float - lattice length of dosing grid
+
+	Returns:
+		- numpy array of voxel values
 	"""
 	return (int(bins/2) + (cm/lattice).round()).astype(int)
 
 def voxel_to_cm(voxels: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts voxel space to Cartesian space. Inverse of cm_to_voxel.
+
+	Parameters:
+		- voxels: np.ndarray - numpy array specifying voxels for conversion
+		- bins: int - number of bins from the simulation
+		- lattice: float - lattice length of dosing grid
+
+	Returns: 
+		- numpy array of cm values
 	"""
 	return (voxels - int(bins/2))*lattice
 
 def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 	""" 
-	Transform 2D Cartesian coordinates to Polar coordinates. 
-	Assumes input matrix where first two columns are Cartesian coordinates; remaining columns returned unchanged.
+	Transform 2D Cartesian coordinates to polar coordinates. 
+
+	Parameters:
+		- cart_plane: np.ndarray - matrix of values to convert. Assumes first two columns are Cartesian coordinates; 
+		remaining columns returned unchanged.
+
+	Returns:
+		- numpy array; first two columns in polar coordinates, remaining columns unchanged
 	"""
 	num_cols = np.shape(cart_plane)[1]
 	polar_plane = np.empty(np.shape(cart_plane))
@@ -50,11 +88,26 @@ def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 	return polar_plane
 
 def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float) -> tuple:
+	"""
+	Given an input voxel, extracts the energy deposited in that voxel during the TOPAS simulation.
+
+	Parameters:
+		- file: str - input csv file
+		- const_plane: int - voxel that is held constant when extracting plane
+		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
+		- norm_point: tuple - point (in cm) at which we are extracting the energy value
+		- bins: int - number of bins from the simulation
+		- lattice: float - lattice length of the dosing grid
+
+	Returns:
+		- Tuple specifying energy at norm_point and voxels of the point
+	"""
 	plane = generate_plane(file, const_plane, const_axis)
 
 	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
 	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
 
+	# plane has columns (x, y, energy, std_dev)
 	norm_energy = plane[mask][0][2]
 
 	return (norm_energy, norm_point_voxel)
@@ -62,7 +115,14 @@ def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point
 def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.ndarray:
 	"""
 	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
-	Assumes XBins = YBins.
+
+	Parameters:
+		- plane: np.ndarray - numpy array specifying plane for analysis, with columns (x, y, energy, std_dev)
+		- norm_energy: float - energy returned from extract_norm_energy above
+		- dose: float - desired prescription dose delivered to norm_point
+
+	Returns:
+		- numpy matrix with energy values scaled to prescription dose, all other values unchanged
 	"""
 	# Scale energy and standard deviation values
 	plane[:,2:] = (plane[:,2:]/norm_energy)*dose
@@ -74,36 +134,57 @@ def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.n
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
 	radius: float=0.0, scale: bool=False, norm_energy: float=0.0, dose: float=0.0) -> tuple:
 	"""
-	Returns energy along an angle theta in range (0, pi].
-	To also return the energy at a constant radius, set parameter radius to be > 0.
+	Returns energy along an angle theta in range (0, pi]. Optionally returns energy from voxels at a distance radius from the 
+	origin.
+
+	Parameters:
+		- file: str - input csv file
+		- theta: float - angle along which energy values are extracted. Range = (0, pi] - use theta = pi to plot along x-axis
+		- bins: tuple - number of bins from the simulation in format (bins, bins)
+		- dose_grid_half: float - dosing grid half length
+		- z_slice: int - value of the voxel held constant when running generate_plane; not required to be along z-axis
+		- err: float - tolerance when extracting voxels that lie along an angle theta.
+		- radius: float - if radius > 0, function will also extract energy from voxels at radius +/- err from the origin 
+		- scale: bool - if True, normalizes extracted energy values to the dose delivered at norm_point 
+		- norm_energy: float - energy extracted from norm_point. Must be nonzero if scale == True.
+		- dose: float - prescription dose delivered to norm_point. Must be nonzero if scale == True.
+
+	Returns:
+		- Tuple (linear_energy, eng_at_const_r), where
+			- linear_energy is a numpy array specifying energy in voxels along theta, with columns (r, theta, energy, std_dev)
+			- eng_at_const_r is a numpy array specifying energy in voxels at radius +/- err, with columns (r, theta, energy, std_dev)
+		- If radius == 0, eng_at_const_r is returned as None
 	"""
 	if theta <= 0 or theta > pi: raise ValueError("Parameter theta must be in range (0, pi] - use theta = pi to plot along x-axis")
 
+	# plane has columns (x, y, energy, std_dev)
 	plane = generate_plane(file, z_slice, 2)
 
+	# Scale all voxels to prescription dose
 	if scale:
 		if (norm_energy == 0) or (dose == 0): raise ValueError("norm_energy and/or dose cannot be 0 if scaling energy values")
 		plane = normalize_energy(plane, norm_energy, dose)
 
 	# Transform voxel space ---> Cartesian space
-	plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
-	plane[:,1] = voxel_to_cm(plane[:,1], bins[1], dose_grid_half*2/bins[1])
+	plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0]) # transform x
+	plane[:,1] = voxel_to_cm(plane[:,1], bins[1], dose_grid_half*2/bins[1]) # transform y
 
 	# Transform Cartesian space ---> polar space
 	polar = cart_to_polar(plane)
 
-	# Extract energy values along theta
+	# Extract energy values along theta - create Boolean masks
 	mask_theta = (polar[:,1] < theta + err) & (polar[:,1] > theta - err)
 	mask_pi = (polar[:,1] < (theta - pi) + err) & (polar[:,1] > (theta - pi) - err)
 
 	linear_energy = polar[(mask_theta + mask_pi)]
 
-	# Multiply r-values along (theta - pi) by -1 for plotting
+	# Multiply r-values along (theta - pi) by -1 for easier plotting
 	mask_invert = (linear_energy[:,1] < (theta - pi) + err) & (linear_energy[:,1] > (theta - pi) - err)
 	linear_energy[:,0][mask_invert] *= -1
 
 	eng_at_const_r = None
 	if radius > 0:
+		# Extract energy values at constant radius - create Boolean masks
 		mask_radius = (polar[:,0] < radius + err) & (polar[:,0] > radius - err)
 		eng_at_const_r = polar[mask_radius]
 
@@ -112,7 +193,14 @@ def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: flo
 def average_energy(linear_energy: np.ndarray, std_dev: bool=False) -> np.ndarray:
 	"""
 	Averages energy along theta and (theta - pi) to smooth out statistical fluctuations.
-	Assumes linear_energy has column format: r, theta, energy_sum, std_dev (optional), where r < 0 indicates values along (theta - pi)
+
+	Parameters:
+		- linear_energy: np.ndarray - numpy array specifying energy along theta, with columns (r, theta, energy, std_dev)
+		- std_dev: bool - if True, appropriately combines standard deviation values for corresponding voxels when averaging
+
+	Returns:
+		- numpy array eng_pos_r specifying average energy along theta and (theta - pi), with columns 
+		(r, theta, average_energy, average_std_dev) 
 	"""
 	# Drops the point (0,0)
 	mask_neg_r = (linear_energy[:,0] < 0)
@@ -134,7 +222,19 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	Constructs numpy arrays to plot energy or std dev as a function of radius/angle.
 
 	Parameters:
-		- ind_var --> sets independent variable of plot: 0 = radius, 1 = angle
+		- linear_energy: np.ndarray - numpy array specifying energy along theta or at radius r, with columns (r, theta, energy, std_dev)
+		- ind_var: int - sets independent variable of plot (0 = radius, 1 = angle)
+		- plot_rng: tubple - tuple setting range for x-axis; if plot_rng[0] == plot_rng[1], plots entire range
+		- std_dev: bool - if True, plots standard dev for each point
+		- num_Hx: float - number of histories from simulation; must be nonzero if std_dev == True
+
+	Returns:
+		- Tuple (x, energy, std_dev_sum, std_dev_mean, yerr), where
+			- x = independent variable (radius or theta)
+			- energy = dependent variable 
+			- std_dev_sum = standard dev of total energy deposited in voxel
+			- std_dev_mean = standard dev of mean energy deposited in voxel
+			- yerr = deprecated - do not use
 	"""
 
 	if ind_var > 1 or ind_var < 0: raise ValueError("Independent variable must be 0 = radius or 1 = angle")
@@ -144,9 +244,11 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 		r1 = np.min(linear_energy[:,ind_var])
 		r2 = np.max(linear_energy[:,ind_var])
 	else:
+		# Plot range specified by plot_rng
 		r1 = plot_rng[0]
 		r2 = plot_rng[1]
 	
+	# Boolean mask to extract x- and y-axis values within plot_rng
 	b1 = (linear_energy[:,ind_var] >= r1) & (linear_energy[:,ind_var] <= r2)
 
 	yerr = None
@@ -157,196 +259,98 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 		if num_Hx == 0: raise ValueError("If plotting std dev, number of histories must be specified (cannot be zero)")
 		if np.shape(linear_energy)[1] < 3: raise ValueError("Input csv file does not contain std dev information")
 
+		# See https://topas.readthedocs.io/en/latest/parameters/scoring/misc.html#statistical-information
 		std_dev_of_sum = np.sqrt(num_Hx)*linear_energy[:,3]
 		std_dev_of_mean = linear_energy[:,3]/np.sqrt(num_Hx)
-		yerr = std_dev_of_sum[b1]/2
 
+		yerr = std_dev_of_sum[b1]/2 # do not use - deprecated
+
+	# Use Boolean mask b1 to extract x-axis, y-axis, and standard deviation values
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], std_dev_of_mean[b1], yerr)
 
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
 	source_rad: float=0.0, scale: bool=False, norm_energy: float=0.0, dose: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
+
+	Parameters:
+		- file: str - input csv file
+		- bins: tuple - number of bins from the simulation in format (bins, bins)
+		- dose_grid_half: float - dosing grid half length
+		- const_plane: int - specifies the voxel that is held constant when extracting plane
+		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
+		- rng_X: tuple - range of x-axis
+		- rng_Y: tuple - range of y-axis
+		- source_rad: float - specifies radius within which voxel energies are set to 0. Must be nonzero if zero_source == True.
+		- scale: bool - if True, normalizes extracted energy values to the dose delivered at norm_point
+		- norm_energy: float - energy extracted from norm_point. Must be nonzero if scale == True.
+		- dose: float - prescription dose delivered to norm_point. Must be nonzero if scale == True.
+		- zero_source: float - if True, all voxels with r < source_rad have their energies set to 0
+		- std_dev: bool - if True, calculates standard dev for each voxel
+
+	Returns:
+		- Tuple (X, Y, heights, std_dev), where
+			- X is a numpy array of X-coordinates
+			- Y is a numpy array of Y-coordinates
+			- heights are the energy values for each voxel (i.e. height of contour plot at a particular location)
+			- std_dev is standard dev value at each voxel
 	"""
 	plane = generate_plane(file, const_plane, const_axis)
 
+	# Scale all voxels to prescription dose
 	if scale:
 		if (norm_energy == 0) or (dose == 0): raise ValueError("norm_energy and/or dose cannot be 0 if normalizing energy values")
 		plane = normalize_energy(plane, norm_energy, dose)
 
 	# Using (X, Y) notation here, but could be (X, Z) or (Y, Z) as well
+	# Construct X and Y axes for contour plot
 	X = voxel_to_cm(np.arange(0,bins[0]), bins[0], dose_grid_half*2/bins[0])
 	Y = voxel_to_cm(np.arange(0,bins[1]), bins[1], dose_grid_half*2/bins[1])
 
+	# Define Boolean masks to extract range of each axis
 	mask_X = (X > rng_X[0]) & (X < rng_X[1])
 	mask_Y = (Y > rng_Y[0]) & (Y < rng_Y[1])
 
+	# Zero source for r < source_rad
 	if zero_source:
 		if source_rad == 0: raise ValueError("Source radius must be > 0 if zeroing source on contour plot")
 
+		# Convert voxel --> Cartesian
 		plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
 		plane[:,1] = voxel_to_cm(plane[:,1], bins[1], dose_grid_half*2/bins[1])
 
+		# Convert Cartesian --> polar
 		polar_plane = cart_to_polar(plane)
-		polar_mask = polar_plane[:,0] <= source_rad
 
-		plane[:,2][polar_mask] *= 0
+		# Extract values with r < source_rad and set energies to zero
+		polar_mask = polar_plane[:,0] <= source_rad
+		plane[:,2][polar_mask] *= 0 # recall that plane has columns (x, y, energy, std_dev)
 	
-	#height_values = np.transpose(np.reshape(plane[:,2], bins))[mask_Y][:,mask_X] # DEPRECATED
+	# Reshape the energy column of plane to a format compatible with the matplotlib countour function
 	height_values = np.reshape(plane[:,2], bins)[mask_X][:,mask_Y]
 
+	# Extract standard dev values if necessary
 	std_dev_values = None
 	if std_dev:
 		std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
 
+	# Note that we use Boolean masks mask_X and mask_Y defined above to extract X- and Y-axes
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
-
-def contour_normalization(energy: np.ndarray, dose: float, roi_cm: tuple, bins: int, lattice: float) -> np.ndarray:
-	"""
-	DEPRECATED - but keeping until confirm that simpler normalization code is correct
-
-	Normalize the energy values of the simulation to a prescription energy value at a particular ROI
-
-	roi_cm units = real space (cm)
-
-	Use with caution - if roi_cm is chosen inside an area w/zeroed energy, will encounter divide-by-zero error
-	"""
-	roi_point_voxel = cm_to_voxel(np.array(roi_cm), bins, lattice)
-	dose_point = energy[roi_point_voxel[0], roi_point_voxel[1]]
-	print(dose_point) # debug
-	print(roi_point_voxel) # debug
-
-	normalized_energy = (energy/dose_point)*dose
-
-	"""
-	# Deprecated method - above is simpler + reduces probability of divide-by-zero error
-
-	mask = energy > 0
-	scaling_factors = np.zeros(np.shape(energy))
-
-	it = np.nditer(mask, flags=['multi_index'])
-	for x in it:
-		if x:
-			scaling_factors[it.multi_index] = dose_point/energy[it.multi_index]
-		else:
-			scaling_factors[it.multi_index] = np.inf
-
-	normalized_energy = dose/scaling_factors
-
-	"""
-	
-	return normalized_energy
 
 #### Rotation functions ####
 
-def twoD_rot(theta: float) -> np.ndarray:
-    return np.array([[np.cos(theta), -1*np.sin(theta)], [np.sin(theta), np.cos(theta)]])
-
-def rot_mapping(holding: set, rot_voxel: tuple) -> tuple:
-    # is rot_voxel in holding?
-    # no ---> new voxel = rot_voxel
-    # yes --> check rot_voxel[0] + 1, rot_voxel[0] - 1, etc. until empty voxel found
-    # return empty voxel for assignment
-    
-    if not (rot_voxel in holding):
-        empty_vox = rot_voxel
-
-    # Check along x +/- 1, y +/- 1
-    elif not ((rot_voxel[0] + 1, rot_voxel[1]) in holding):
-        empty_vox = (rot_voxel[0] + 1, rot_voxel[1])
-
-    elif not ((rot_voxel[0], rot_voxel[1] - 1) in holding):
-        empty_vox = (rot_voxel[0], rot_voxel[1] - 1)
-
-    elif not ((rot_voxel[0] - 1, rot_voxel[1]) in holding):
-        empty_vox = (rot_voxel[0] - 1, rot_voxel[1])
-
-    elif not ((rot_voxel[0], rot_voxel[1] + 1) in holding):
-        empty_vox = (rot_voxel[0], rot_voxel[1] + 1)
-
-    # Check four corners
-    elif not ((rot_voxel[0] + 1, rot_voxel[1] + 1) in holding):
-        empty_vox = (rot_voxel[0] + 1, rot_voxel[1] + 1)
-
-    elif not ((rot_voxel[0] + 1, rot_voxel[1] - 1) in holding):
-        empty_vox = (rot_voxel[0] + 1, rot_voxel[1] - 1)
-
-    elif not ((rot_voxel[0] - 1, rot_voxel[1] - 1) in holding):
-        empty_vox = (rot_voxel[0] - 1, rot_voxel[1] - 1)
-
-    elif not ((rot_voxel[0] - 1, rot_voxel[1] + 1) in holding):
-        empty_vox = (rot_voxel[0] - 1, rot_voxel[1] + 1)
-
-    else:
-        raise ValueError("No empty voxel found for " + str(rot_voxel))
-
-    return empty_vox
-
-def rotate_array(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, bins: int, rngX: tuple, 
-	lattice: float) -> np.ndarray:
+def rotate_applicator(energy: np.ndarray, theta: float) -> np.ndarray:
 	"""
-	Rotates the input energy array by theta. 
-	Assumes that the energy array is square, i.e. rngX = rngY
+	Uses Pillow (Python Imaging Library) to rotate the applicator's radiation distribution.
+	Note that information loss during rotation is inversely proportional to voxel density.
+
+	Parameters:
+		- energy: np.ndarray - matrix with energy values from contour plot (equivalent to "height" returned from contour_energy")
+		- theta: float - angle for rotation
+
+	Returns:
+		- Matrix with energy values rotated by theta
 	"""
-	rotation = np.zeros(np.shape(energy))
-	holding = set()
-
-	rot = twoD_rot(angle)
-
-	dose_grid_half = (rngX[1] - rngX[0])/2
-
-	buffer = 1.5*np.sqrt(2)*lattice # still getting out-of-bound errors, even with this padding
-
-	for i in np.arange(0, np.shape(X)[0]):
-		for j in np.arange(0, np.shape(Y)[0]):
-			vector = np.array([X[i], Y[j]])
-
-			if np.linalg.norm(vector) <= dose_grid_half - buffer:
-				height = energy[i][j]
-
-				rotated_vec = rot @ vector
-
-				rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
-
-				# Note that we convert rotated_voxel to a tuple
-				rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
-
-				# Check that rotated voxel is inside inscribed circle before assigning to rotation tensor?
-
-				rotation[rotated_voxel[0]][rotated_voxel[1]] = height
-
-				holding.add((rotated_voxel[0], rotated_voxel[1]))
-
-	return rotation
-
-def rotate_array_updated(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, angle: float, bins: int, lattice: float) -> np.ndarray:
-	"""
-	Checking for out-of-bounds in a different way. Possibly slower runtime?
-	"""
-	rotation = np.zeros(np.shape(energy))
-	holding = set()
-
-	rot = twoD_rot(angle)
-
-	#dose_grid_half = (rngX[1] - rngX[0])/2 # not needed in this implementation
-
-	#buffer = 1.5*np.sqrt(2)*lattice # not needed in this implementation
-
-	for i in np.arange(0, np.shape(X)[0]):
-		for j in np.arange(0, np.shape(Y)[0]):
-			vector = np.array([X[i], Y[j]])
-
-			height = energy[i][j]
-
-			rotated_vec = rot @ vector
- 
-			rotated_voxel = cm_to_voxel(rotated_vec, bins, lattice)
-
-			# Note that we convert rotated_voxel to a tuple
-			rotated_voxel = rot_mapping(holding, (rotated_voxel[0], rotated_voxel[1]))
-
-			if (rotated_voxel[0] < np.shape(X)[0]) and (rotated_voxel[1] < np.shape(Y)[0]):	
-				rotation[rotated_voxel[0]][rotated_voxel[1]] = height
-				holding.add((rotated_voxel[0], rotated_voxel[1]))
-
-	return rotation
+	Im = Image.fromarray(energy)
+	Im = Im.rotate(theta)
+	return np.array(Im)
