@@ -200,15 +200,22 @@ def average_energy(linear_energy: np.ndarray, std_dev: bool=False) -> np.ndarray
 
 	Returns:
 		- numpy array eng_pos_r specifying average energy along theta and (theta - pi), with columns 
-		(r, theta, average_energy, average_std_dev) 
+		(r, theta, average_energy, average_std_dev)
 	"""
+
 	# Drops the point (0,0)
 	mask_neg_r = (linear_energy[:,0] < 0)
 	mask_pos_r = (linear_energy[:,0] > 0)
 	
+	# Extract energy at positive and negative radius
 	eng_neg_r = linear_energy[mask_neg_r]
 	eng_pos_r = linear_energy[mask_pos_r]
 
+	if np.shape(eng_neg_r) != np.shape(eng_pos_r):
+		raise ValueError("eng_neg_r and eng_pos_r are not the same shape. The parameter err in energy_along_theta may be too high.")
+
+	# Average energy values
+	# Note that eng_pos_r and eng_neg_r must be same shape per the error message above
 	eng_pos_r[:,2] = (eng_pos_r[:,2] + eng_neg_r[:,2])/2
 
 	if std_dev:
@@ -346,7 +353,7 @@ def rotate_applicator(energy: np.ndarray, theta: float) -> np.ndarray:
 
 	Parameters:
 		- energy: np.ndarray - matrix with energy values from contour plot (equivalent to "height" returned from contour_energy")
-		- theta: float - angle for rotation
+		- theta: float - angle for rotation; must be in degrees (not radians)
 
 	Returns:
 		- Matrix with energy values rotated by theta
