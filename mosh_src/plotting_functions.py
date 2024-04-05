@@ -37,6 +37,35 @@ def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
 
 	return plane
 
+def combine_files(files: list, save_file: bool=True, file_name: str="combined_energy.csv") -> np.ndarray:
+	"""
+	Combines multiple output files by adding energy values assigned to each voxel.
+
+	Parameters:
+		- files: list - a list of strings specifying location of TOPAS output csv files
+		- save_file: bool - flag to determine whether the combined energy tensor is saved to a 
+		csv file
+	
+	Returns:
+		- numpy array with columns (x, y, z, total_energy, total_std_dev), where total_energy is 
+		the summed energy across a given voxel for n = length(files) output files and total_std_dev
+		is the appropriately combined standard deviations for that voxel
+	"""
+	energy_storage = []
+	# Extract tensors with columns (x, y, z, energy, std_dev)
+	for f in files:
+		energy_storage.append(np.genfromtxt(f, delimiter=","))
+
+	combined_eng = np.zeros(np.shape(energy_storage[0]))
+	combined_eng[:,0:3] = energy_storage[0][:,0:3]
+	for volume in energy_storage:
+		combined_eng[:,3] += volume[:,3]
+
+	if save_file:
+		np.savetxt(file_name, combined_eng, delimiter=",")
+
+	return combined_eng
+
 def cm_to_voxel(cm: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	Converts Cartesian space to voxel space. Inverse of voxel_to_cm.
