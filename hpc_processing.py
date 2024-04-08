@@ -75,11 +75,11 @@ X, Y, energy1, std_dev = contour_energy(combined_file_name, (bins_mosh, bins_mos
 ############
 
 # Construct basic contour plot
-fig2, ax2 = plt.subplots()
+fig1, ax1 = plt.subplots()
 Xv, Yv = np.meshgrid(X, Y, indexing='ij') # this indexing is important - otherwise contour plot will be rotated
 
-contour2 = ax2.contourf(Xv, Yv, energy1, locator=ticker.LinearLocator(), norm="linear", cmap="rainbow")
-cbar2 = fig2.colorbar(contour2, label="% of dose")
+contour1 = ax1.contourf(Xv, Yv, energy1, locator=ticker.LinearLocator(), norm="linear", cmap="rainbow")
+cbar1 = fig1.colorbar(contour1, label="% of dose")
 
 plt.savefig(plot_name)
 
