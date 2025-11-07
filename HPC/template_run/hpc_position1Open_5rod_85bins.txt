@@ -1,0 +1,562 @@
+#### MOSH - position 1 open - 85 bins ####
+#### All parameters in one file for optimization ####
+
+# This file defines a single run with 1e6 histories. The total number of histories is 
+# determined by the scripting shell file ("hpc_scripting.sh" in this example). To determine
+# the total number of histories, inspect the parameter #SBATCH --array=0-x in the shell file. 
+# You can then calculate (# histories) = i:So/ActiveSource/NumberOfHistoriesInRun * x. 
+
+############ File 1: SimpleDoseScorer ############
+
+######## Tunable parameters ########
+
+## TEMPLATE - update all of the parameters in this section before running simulation ##
+
+# Make sure ARRAY_TASK_ID is included somehwere in the output file name
+s:Sc/DoseToPhantom/OutputFile = "../1rod_removed_1000Hx/1rod_position1_1e6_85bins_2.125cmHL_ARRAY_TASK_ID"
+
+i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:Ts/ShowHistoryCountAtInterval = 100000
+
+s:Ge/Channel1Rod/Material          	= "Air" # rod fully removed
+s:Ge/Channel2Rod/Material          	= "BlockTungsten"
+s:Ge/Channel3Rod/Material          	= "BlockTungsten"
+s:Ge/Channel4Rod/Material          	= "BlockTungsten"
+s:Ge/Channel5Rod/Material          	= "BlockTungsten"
+s:Ge/Channel6Rod/Material          	= "BlockTungsten"
+
+## Define world ##
+d:Ge/World/HLX      = 10 cm
+d:Ge/World/HLY      = 10 cm
+d:Ge/World/HLZ      = 10 cm
+s:Ge/World/Material = "G4_WATER"
+
+## Scorer geometry ##
+s:Ge/DoseGrid/Type       = "TsBox"
+s:Ge/DoseGrid/Parent     = "World"
+d:Ge/DoseGrid/HLX        =  2.125 cm
+d:Ge/DoseGrid/HLY        =  2.125 cm 
+d:Ge/DoseGrid/HLZ        =  2.125 cm 
+s:Ge/DoseGrid/Color      =  "red"
+b:Ge/DoseGrid/IsParallel = "T"
+i:Ge/DoseGrid/XBins      = 85
+i:Ge/DoseGrid/YBins      = 85
+i:Ge/DoseGrid/ZBins      = 85
+
+####################################
+
+## Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func ##
+s:Sc/DoseToPhantom/Quantity                   = "TrackLengthEstimator"
+sv:Sc/DoseToPhantom/Report                    = 2 "Sum" "Standard_Deviation" #1 "Sum"
+
+# Run on HPC
+s:Sc/DoseToPhantom/InputFile                  = "/vast/palmer/apps/avx2/software/TOPAS/3.9-foss-2022b/examples/Brachytherapy/Muen.dat"
+
+# Local run
+#s:Sc/DoseToPhantom/InputFile                  = "/Applications/topas/examples/Brachytherapy/Muen.dat"
+
+Ts/Seed = ARRAY_TASK_ID
+
+s:Sc/DoseToPhantom/Component                  = "DoseGrid"
+b:Sc/DoseToPhantom/OutputToConsole            = "F"
+s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
+s:Sc/DoseToPhantom/OutputType                 = "csv"
+#b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
+#s:Sc/DoseToPhantom/OutputFile                 = "../1rod/1rod_position1_1e6_85bins_2.125cmHL_ARRAY_TASK_ID"
+#sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
+
+## Local energy deposition of electrons ## 
+d:Ph/Default/CutForElectron = 10 cm
+
+## PHYSICS MODEL TO USE - this model was recommended in Berumen, Brachytherapy 20(2021) ##
+sv:Ph/Default/Modules = 1 "g4em-livermore"
+
+## Number of Histories ##
+b:Gr/Enable = "T"
+#i:So/ActiveSource/NumberOfHistoriesInRun = 1000
+#i:Ts/ShowHistoryCountAtInterval = 10
+
+## Graphics - for debugging ##
+#b:Ts/PauseBeforeQuit = "T"
+#s:Gr/ViewA/Type        = "OpenGL"
+#b:Gr/ViewA/IncludeTrajectories = "False"
+#Ts/UseQt = "True"
+
+# Specify number of CPU to use ## 
+#i:Ts/NumberOfThreads = -1
+b:Ts/ShowCPUTime = "True" # Show CPU time used in various phases of the simulation
+i:Ts/TrackingVerbosity = 0
+
+############ File 2: GammaMedSource In SmartApp ############
+
+## Define geometry worlds ##
+
+sv:Ph/Default/LayeredMassGeometryWorlds =  5 "TandemWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  6 "TandemWorld" "BoxWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  4 "TandemWorld" "ChannelWorld" "ShieldingWorld" "ActiveSourceWorld" 
+
+### Position source in applicator air channel - original Z at tip of tandem is -22.557 ##
+d:Ge/Source/TransZ = -5.0 mm
+d:Ge/Source/TransY = 0.0 mm # location = inside air channel (center of applicator)
+#d:Ge/Source/TransY = 1.8 mm # location = inside channel 1
+#d:Ge/Source/TransY = 2.2 mm # UCSF offset
+#d:Ge/Source/TransY = 2.32 mm # UCSF multirod applicator, offset for 12 oclock rod
+
+############ File 3: SMART applicator ############
+
+## One rod inserted (rotationally symmetric system) ##
+
+## Define Tungsten ##
+sv:Ma/BlockTungsten/Components = 1 "Tungsten" 
+uv:Ma/BlockTungsten/Fractions  = 1 1.0
+d:Ma/BlockTungsten/Density     = 19.30 g/cm3
+
+## TANDEM GEOMETRY ##
+s:Ge/SMARTApplicator/Type   = "Group"
+s:Ge/SMARTApplicator/Parent = "World"
+
+s:Ge/TandemGeometry/Type              	= "Group"
+s:Ge/TandemGeometry/Parent            	= "SMARTApplicator"
+b:Ge/TandemGeometry/IsParallel        	= "True"
+s:Ge/TandemGeometry/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/Tandem/Type              		= "TsCylinder"
+s:Ge/Tandem/Parent            		= "TandemGeometry"
+s:Ge/Tandem/Material          		= "BlockTungsten"
+d:Ge/Tandem/RMin              		= 0.6 mm
+d:Ge/Tandem/RMax              		= 3.0 mm
+d:Ge/Tandem/HL                		= 25 mm
+d:Ge/Tandem/SPhi              		= 0. deg
+d:Ge/Tandem/DPhi              		= 360. deg
+s:Ge/Tandem/Color             		= "Gray"
+s:Ge/Tandem/DrawingStyle      		= "Solid"
+b:Ge/Tandem/IsParallel        		= "True"
+s:Ge/Tandem/ParallelWorldName 		= "TandemWorld"
+
+s:Ge/TandemCap/Type         		= "TsSphere"
+s:Ge/TandemCap/Material     		= "BlockTungsten"
+s:Ge/TandemCap/Parent       		= "TandemGeometry"
+d:Ge/TandemCap/RMin         		= 0 mm
+d:Ge/TandemCap/RMax         		= Ge/Tandem/RMax mm
+d:Ge/TandemCap/HL           		= 1.5 mm
+d:Ge/TandemCap/TransZ      			= -25 mm
+d:Ge/TandemCap/RotX        			= 90 deg
+d:Ge/TandemCap/RotY        			= 0 deg
+d:Ge/TandemCap/RotZ        			= 0 deg
+d:Ge/TandemCap/SPhi        			= 0 deg
+d:Ge/TandemCap/DPhi        			= 180 deg
+d:Ge/TandemCap/STheta      			= 0 deg
+d:Ge/TandemCap/DTheta      			= 180 deg
+s:Ge/TandemCap/Color        		= "gray"
+s:Ge/TandemCap/DrawingStyle 		= "Solid"
+b:Ge/TandemCap/IsParallel        	= "True"
+s:Ge/TandemCap/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/TandemAirChan/Type             	= "TsCylinder"
+s:Ge/TandemAirChan/Parent           	= "TandemGeometry"
+s:Ge/TandemAirChan/Material         	= "Air"
+d:Ge/TandemAirChan/RMin             	= 0.0 mm
+d:Ge/TandemAirChan/RMax             	= Ge/Tandem/RMin mm
+d:Ge/TandemAirChan/HL               	= Ge/Tandem/HL mm
+d:Ge/TandemAirChan/SPhi             	= 0. deg
+d:Ge/TandemAirChan/DPhi             	= 360. deg
+s:Ge/TandemAirChan/Color            	= "Black"
+s:Ge/TandemAirChan/DrawingStyle     	= "Solid"
+#b:Ge/TandemAirChan/Invisible 			= "True"
+b:Ge/TandemAirChan/IsParallel       	= "True"
+s:Ge/TandemAirChan/ParallelWorldName 	= "TandemWorld"
+
+## CHANNEL GEOMETRY ##
+s:Ge/ChannelGeometry/Type              = "Group"
+s:Ge/ChannelGeometry/Parent            = "SMARTApplicator"
+b:Ge/ChannelGeometry/IsParallel        = "True"
+s:Ge/ChannelGeometry/ParallelWorldName = "ChannelWorld"
+
+# Channel 1 is at 12 oclock, with the remaining channels located clockwise from channel 1
+# Radius of overall channel = 0.8 mm
+# For optimization, our parameters are the variables Ge/ChannelXRod/RMax (for rod X)
+
+# Tungsten
+s:Ge/Channel1Rod/Type              	= "TsCylinder"
+s:Ge/Channel1Rod/Parent            	= "Tandem"
+#s:Ge/Channel1Rod/Material          	= "Air" # rod fully removed
+d:Ge/Channel1Rod/RMin              	= 0.0 mm
+d:Ge/Channel1Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel1Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel1Rod/TransY            	= 1.8 mm
+#d:Ge/Channel1Rod/TransX			= 0.0 mm
+d:Ge/Channel1Rod/SPhi              	= 0. deg
+d:Ge/Channel1Rod/DPhi              	= 360. deg
+s:Ge/Channel1Rod/Color             	= "Red"
+s:Ge/Channel1Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel1Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel1Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel1Air/Type              	= "TsCylinder"
+s:Ge/Channel1Air/Parent            	= "Tandem"
+s:Ge/Channel1Air/Material          	= "Air"
+d:Ge/Channel1Air/RMin              	= Ge/Channel1Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel1Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel1Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel1Air/TransY            	= 1.8 mm
+#d:Ge/Channel1Air/TransX			= 0.0 mm
+d:Ge/Channel1Air/SPhi              	= 0. deg
+d:Ge/Channel1Air/DPhi              	= 360. deg
+s:Ge/Channel1Air/Color             	= "Blue"
+s:Ge/Channel1Air/DrawingStyle      	= "Solid"
+b:Ge/Channel1Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel1Air/ParallelWorldName 	= "ChannelWorld"
+
+#####
+
+# Tungsten
+s:Ge/Channel2Rod/Type              	= "TsCylinder"
+s:Ge/Channel2Rod/Parent            	= "Tandem"
+#s:Ge/Channel2Rod/Material          	= "BlockTungsten"
+d:Ge/Channel2Rod/RMin              	= 0.0 mm
+d:Ge/Channel2Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel2Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel2Rod/TransY            	= 0.9 mm
+d:Ge/Channel2Rod/TransX				= 1.56 mm
+d:Ge/Channel2Rod/SPhi              	= 0. deg
+d:Ge/Channel2Rod/DPhi              	= 360. deg
+s:Ge/Channel2Rod/Color             	= "Red"
+s:Ge/Channel2Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel2Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel2Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel2Air/Type              	= "TsCylinder"
+s:Ge/Channel2Air/Parent            	= "Tandem"
+s:Ge/Channel2Air/Material          	= "Air"
+d:Ge/Channel2Air/RMin              	= Ge/Channel2Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel2Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel2Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel2Air/TransY            	= 0.9 mm
+d:Ge/Channel2Air/TransX				= 1.56 mm
+d:Ge/Channel2Air/SPhi              	= 0. deg
+d:Ge/Channel2Air/DPhi              	= 360. deg
+s:Ge/Channel2Air/Color             	= "Blue"
+s:Ge/Channel2Air/DrawingStyle      	= "Solid"
+b:Ge/Channel2Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel2Air/ParallelWorldName 	= "ChannelWorld"
+
+####
+
+# Tungsten
+s:Ge/Channel3Rod/Type              	= "TsCylinder"
+s:Ge/Channel3Rod/Parent            	= "Tandem"
+#s:Ge/Channel3Rod/Material          	= "BlockTungsten"
+d:Ge/Channel3Rod/RMin              	= 0.0 mm
+d:Ge/Channel3Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel3Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel3Rod/TransY            	= -0.9 mm
+d:Ge/Channel3Rod/TransX				= 1.56 mm
+d:Ge/Channel3Rod/SPhi              	= 0. deg
+d:Ge/Channel3Rod/DPhi              	= 360. deg
+s:Ge/Channel3Rod/Color             	= "Red"
+s:Ge/Channel3Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel3Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel3Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel3Air/Type              	= "TsCylinder"
+s:Ge/Channel3Air/Parent            	= "Tandem"
+s:Ge/Channel3Air/Material          	= "Air"
+d:Ge/Channel3Air/RMin              	= Ge/Channel3Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel3Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel3Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel3Air/TransY            	= -0.9 mm
+d:Ge/Channel3Air/TransX				= 1.56 mm
+d:Ge/Channel3Air/SPhi              	= 0. deg
+d:Ge/Channel3Air/DPhi              	= 360. deg
+s:Ge/Channel3Air/Color             	= "Blue"
+s:Ge/Channel3Air/DrawingStyle      	= "Solid"
+b:Ge/Channel3Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel3Air/ParallelWorldName 	= "ChannelWorld"
+
+####
+
+# Tungsten
+s:Ge/Channel4Rod/Type              	= "TsCylinder"
+s:Ge/Channel4Rod/Parent            	= "Tandem"
+#s:Ge/Channel4Rod/Material          	= "BlockTungsten"
+d:Ge/Channel4Rod/RMin              	= 0.0 mm
+d:Ge/Channel4Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel4Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel4Rod/TransY            	= -1.8 mm
+#d:Ge/Channel4Rod/TransX			= 0.0 mm
+d:Ge/Channel4Rod/SPhi              	= 0. deg
+d:Ge/Channel4Rod/DPhi              	= 360. deg
+s:Ge/Channel4Rod/Color             	= "Red"
+s:Ge/Channel4Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel4Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel4Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel4Air/Type              	= "TsCylinder"
+s:Ge/Channel4Air/Parent            	= "Tandem"
+s:Ge/Channel4Air/Material          	= "Air"
+d:Ge/Channel4Air/RMin              	= Ge/Channel4Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel4Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel4Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel4Air/TransY            	= -1.8 mm
+#d:Ge/Channel4Air/TransX			= 0.0 mm
+d:Ge/Channel4Air/SPhi              	= 0. deg
+d:Ge/Channel4Air/DPhi              	= 360. deg
+s:Ge/Channel4Air/Color             	= "Blue"
+s:Ge/Channel4Air/DrawingStyle      	= "Solid"
+b:Ge/Channel4Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel4Air/ParallelWorldName 	= "ChannelWorld"
+
+####
+
+# Tungsten
+s:Ge/Channel5Rod/Type              	= "TsCylinder"
+s:Ge/Channel5Rod/Parent            	= "Tandem"
+#s:Ge/Channel5Rod/Material          	= "BlockTungsten"
+d:Ge/Channel5Rod/RMin              	= 0.0 mm
+d:Ge/Channel5Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel5Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel5Rod/TransY            	= -0.9 mm
+d:Ge/Channel5Rod/TransX				= -1.56 mm
+d:Ge/Channel5Rod/SPhi              	= 0. deg
+d:Ge/Channel5Rod/DPhi              	= 360. deg
+s:Ge/Channel5Rod/Color             	= "Red"
+s:Ge/Channel5Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel5Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel5Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel5Air/Type              	= "TsCylinder"
+s:Ge/Channel5Air/Parent            	= "Tandem"
+s:Ge/Channel5Air/Material          	= "Air"
+d:Ge/Channel5Air/RMin              	= Ge/Channel5Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel5Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel5Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel5Air/TransY            	= -0.9 mm
+d:Ge/Channel5Air/TransX				= -1.56 mm
+d:Ge/Channel5Air/SPhi              	= 0. deg
+d:Ge/Channel5Air/DPhi              	= 360. deg
+s:Ge/Channel5Air/Color             	= "Blue"
+s:Ge/Channel5Air/DrawingStyle      	= "Solid"
+b:Ge/Channel5Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel5Air/ParallelWorldName 	= "ChannelWorld"
+
+####
+
+# Tungsten
+s:Ge/Channel6Rod/Type              	= "TsCylinder"
+s:Ge/Channel6Rod/Parent            	= "Tandem"
+#s:Ge/Channel6Rod/Material          	= "BlockTungsten"
+d:Ge/Channel6Rod/RMin              	= 0.0 mm
+d:Ge/Channel6Rod/RMax              	= 0.795 mm # max radius = 0.795 mm - leaves 0.005 mm air gap if channel filled
+d:Ge/Channel6Rod/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel6Rod/TransY            	= 0.9 mm
+d:Ge/Channel6Rod/TransX				= -1.56 mm
+d:Ge/Channel6Rod/SPhi              	= 0. deg
+d:Ge/Channel6Rod/DPhi              	= 360. deg
+s:Ge/Channel6Rod/Color             	= "Red"
+s:Ge/Channel6Rod/DrawingStyle      	= "Solid"
+b:Ge/Channel6Rod/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel6Rod/ParallelWorldName 	= "ChannelWorld"
+
+# Air
+s:Ge/Channel6Air/Type              	= "TsCylinder"
+s:Ge/Channel6Air/Parent            	= "Tandem"
+s:Ge/Channel6Air/Material          	= "Air"
+d:Ge/Channel6Air/RMin              	= Ge/Channel6Rod/RMax mm # RMin for air cushion is RMax for tungsten rod
+d:Ge/Channel6Air/RMax              	= 0.8 mm # RMax for air cushion is always 0.8 mm (total diameter of channel)
+d:Ge/Channel6Air/HL                	= Ge/Tandem/HL mm
+d:Ge/Channel6Air/TransY            	= 0.9 mm
+d:Ge/Channel6Air/TransX				= -1.56 mm
+d:Ge/Channel6Air/SPhi              	= 0. deg
+d:Ge/Channel6Air/DPhi              	= 360. deg
+s:Ge/Channel6Air/Color             	= "Blue"
+s:Ge/Channel6Air/DrawingStyle      	= "Solid"
+b:Ge/Channel6Air/IsParallel        	= "True"
+#b:Ge/Channel1/Invisible 		= "True"
+s:Ge/Channel6Air/ParallelWorldName 	= "ChannelWorld"
+
+############ File 4: Yb source ############
+
+## Materials - AISI 316L stainless steel for capusule, AISI 304 for cable ##
+## Note: publications list density as 8.06 g/cm3 ##
+sv:Ma/CapsuleSteel/Components = 9 "Carbon" "Chromium" "Iron" "Manganese" "Molybdenum" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/CapsuleSteel/Fractions  = 9 0.0003 0.18 0.61895 0.02 0.03 0.14 0.00045 0.01 0.0003
+d:Ma/CapsuleSteel/Density     = 8.0 g/cm3
+
+sv:Ma/CableSteel/Components = 8 "Carbon" "Chromium" "Iron" "Manganese" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/CableSteel/Fractions  = 8 0.0008 0.20 0.66345 0.02 0.105 0.00045 0.01 0.0003
+d:Ma/CableSteel/Density     = 5.60 g/cm3
+
+sv:Ma/ActiveMaterialS/Components = 1 "Ytterbium"
+uv:Ma/ActiveMaterialS/Fractions = 1 1.0
+d:Ma/ActiveMaterialS/Density = 7.0 g/cm3
+
+## Radioactive source ##
+s:So/ActiveSource/Type                       = "Volumetric"
+s:So/ActiveSource/Component                  = "ActiveSourceGeometry"
+sc:So/ActiveSource/ActiveMaterial            = "ActiveMaterialS"
+s:So/ActiveSource/BeamParticle               = "gamma"
+b:So/ActiveSource/RecursivelyIncludeChildren = "T"
+i:So/ActiveSource/MaxNumberOfPointsToSample  = 1000000000
+s:So/ActiveSource/BeamEnergySpectrumType     = "Discrete"
+
+## Spectrum and source design: Reynoso, JACMP 2017, 18:4:193-199 ##
+dv:So/ActiveSource/BeamEnergySpectrumValues = 16 49.77 50.74 57.30 57.51 57.90 59.03 59.21 63.12 93.62 109.78 118.19 130.52 177.21 197.96 261.08 307.74 keV
+
+uv:So/ActiveSource/BeamEnergySpectrumWeightsUnscaled = 16 0.532 0.94 0.0993 0.192 0.00379 0.0647 0.0172 0.442 0.0261 0.1747 0.01869 0.1131 0.2216 0.358 0.01715 0.1005
+
+uv:So/ActiveSource/BeamEnergySpectrumWeights = 0.30113 * So/ActiveSource/BeamEnergySpectrumWeightsUnscaled
+
+## SOURCE GEOMETRY ##
+s:Ge/Source/Type   = "Group"
+s:Ge/Source/Parent = "World"
+s:Ge/ActiveSourceGeometry/Type              = "Group"
+s:Ge/ActiveSourceGeometry/Parent            = "Source"
+b:Ge/ActiveSourceGeometry/IsParallel        = "True"
+s:Ge/ActiveSourceGeometry/ParallelWorldName = "ActiveSourceWorld"
+
+s:Ge/ActiveCylinder/Type              = "TsCylinder"
+s:Ge/ActiveCylinder/Parent            = "ActiveSourceGeometry"
+s:Ge/ActiveCylinder/Material          = "ActiveMaterialS"
+d:Ge/ActiveCylinder/RMin              = 0 mm
+d:Ge/ActiveCylinder/RMax              = 0.3 mm
+d:Ge/ActiveCylinder/HL                = 1.75 mm
+d:Ge/ActiveCylinder/SPhi              = 0. deg
+d:Ge/ActiveCylinder/DPhi              = 360. deg
+s:Ge/ActiveCylinder/Color             = "white"
+s:Ge/ActiveCylinder/DrawingStyle      = "Solid"
+b:Ge/ActiveCylinder/IsParallel        = "True"
+s:Ge/ActiveCylinder/ParallelWorldName = "ActiveSourceWorld"
+
+## CAPSULE GROUP COMPONENT ##
+s:Ge/Capsule/Type              = "Group"
+s:Ge/Capsule/Parent            = "Source"
+d:Ge/Capsule/TransZ            = -0.035 mm
+b:Ge/Capsule/IsParallel        = "True"
+s:Ge/Capsule/ParallelWorldName = "ShieldingWorld"
+iv:Gr/Color/shieldingcolor     = 4 255 255 255 80
+
+s:Ge/CapsuleAirCap/Type              = "Group"
+s:Ge/CapsuleAirCap/Parent            = "Source"
+d:Ge/CapsuleAirCap/TransZ            = -0.035 mm
+b:Ge/CapsuleAirCap/IsParallel        = "True"
+s:Ge/CapsuleAirCap/ParallelWorldName = "AirCapWorld"
+
+s:Ge/CapsuleCylinder/Type         = "TsCylinder"
+s:Ge/CapsuleCylinder/Material     = "Titanium"
+s:Ge/CapsuleCylinder/Parent       = "Capsule"
+d:Ge/CapsuleCylinder/RMin         = 0.35 mm
+d:Ge/CapsuleCylinder/RMax         = 0.425 mm
+d:Ge/CapsuleCylinder/HL           = 1.785 mm
+d:Ge/CapsuleCylinder/SPhi         = 0. deg
+d:Ge/CapsuleCylinder/DPhi         = 360. deg
+d:Ge/CapsuleCylinder/TransZ       = 0 mm
+s:Ge/CapsuleCylinder/Color        = "shieldingcolor"
+s:Ge/CapsuleCylinder/DrawingStyle = "Solid"
+b:Ge/CapsuleCylinder/IsParallel   = "True"
+s:Ge/CapsuleCylinder/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleAirCylinder/Type 		 = "TsCylinder"
+s:Ge/CapsuleAirCylinder/Material     = "Air" 
+s:Ge/CapsuleAirCylinder/Parent       = "Capsule"
+d:Ge/CapsuleAirCylinder/RMin         = 0.0 mm
+d:Ge/CapsuleAirCylinder/RMax         = 0.35 mm
+d:Ge/CapsuleAirCylinder/HL           = Ge/CapsuleCylinder/HL mm
+d:Ge/CapsuleAirCylinder/SPhi         = 0. deg
+d:Ge/CapsuleAirCylinder/DPhi         = 360. deg
+d:Ge/CapsuleAirCylinder/TransZ       = 0 mm
+#b:Ge/CapsuleAirCylinder/Invisible   = "True"
+b:Ge/CapsuleAirCylinder/IsParallel   = "True"
+s:Ge/CapsuleAirCylinder/Color        = "blue"
+s:Ge/CapsuleAirCylinder/DrawingStyle = "Solid"
+s:Ge/CapsuleAirCylinder/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleConeAir/Type            = "TsSphere"
+s:Ge/CapsuleConeAir/Parent          = "CapsuleAirCap"
+s:Ge/CapsuleConeAir/Material        = "Air"
+d:Ge/CapsuleConeAir/RMin           	= 0.0 mm
+d:Ge/CapsuleConeAir/RMax           	= Ge/CapsuleAirCylinder/RMax mm
+d:Ge/CapsuleConeAir/HL              = 0.175 mm
+d:Ge/CapsuleConeAir/TransZ          = 1.785 mm
+d:Ge/CapsuleConeAir/RotX        	= 270 deg
+d:Ge/CapsuleConeAir/RotY        	= 0 deg
+d:Ge/CapsuleConeAir/RotZ        	= 0 deg
+d:Ge/CapsuleConeAir/SPhi        	= 0 deg
+d:Ge/CapsuleConeAir/DPhi        	= 180 deg
+d:Ge/CapsuleConeAir/STheta      	= 0 deg
+d:Ge/CapsuleConeAir/DTheta      	= 180 deg
+#b:Ge/CapsuleConeAir/Invisible	    = "True"  
+b:Ge/CapsuleConeAir/IsParallel      = "True"
+s:Ge/CapsuleConeAir/Color           = "blue"
+s:Ge/CapsuleConeAir/ParallelWorldName = "AirCapWorld"
+s:Ge/CapsuleConeAir/DrawingStyle      = "Solid"
+
+s:Ge/CapsuleCapTop/Type            = "TsSphere"
+s:Ge/CapsuleCapTop/Parent          = "Capsule"
+s:Ge/CapsuleCapTop/Material        = "Titanium"
+d:Ge/CapsuleCapTop/RMin           	= 0.0 mm
+d:Ge/CapsuleCapTop/RMax           	= Ge/CapsuleCylinder/RMax mm
+#d:Ge/CapsuleCapTop/HL              = 0.2225 mm
+d:Ge/CapsuleCapTop/HLZ              = 0.2225 mm
+d:Ge/CapsuleCapTop/TransZ          	= -1.785 mm  
+d:Ge/CapsuleCapTop/RotX        		= 90 deg
+d:Ge/CapsuleCapTop/RotY        		= 0 deg
+d:Ge/CapsuleCapTop/RotZ        		= 0 deg
+d:Ge/CapsuleCapTop/SPhi        		= 0 deg
+d:Ge/CapsuleCapTop/DPhi        		= 180 deg
+d:Ge/CapsuleCapTop/STheta      		= 0 deg
+d:Ge/CapsuleCapTop/DTheta      		= 180 deg
+s:Ge/CapsuleCapTop/Color           	= "shieldingcolor"
+s:Ge/CapsuleCapTop/DrawingStyle    	= "Solid"
+b:Ge/CapsuleCapTop/IsParallel       = "True"
+s:Ge/CapsuleCapTop/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleBotCyl/Type         = "TsCylinder"
+s:Ge/CapsuleBotCyl/Material     = "Titanium"
+s:Ge/CapsuleBotCyl/Parent       = "Capsule"
+d:Ge/CapsuleBotCyl/RMin         = 0.0 mm
+d:Ge/CapsuleBotCyl/RMax         = Ge/CapsuleCylinder/RMax mm
+d:Ge/CapsuleBotCyl/HL           = 0.055 mm
+d:Ge/CapsuleBotCyl/SPhi         = 0. deg
+d:Ge/CapsuleBotCyl/DPhi         = 360. deg
+d:Ge/CapsuleBotCyl/TransZ       = 1.84 mm
+s:Ge/CapsuleBotCyl/Color        = "shieldingcolor"
+s:Ge/CapsuleBotCyl/DrawingStyle = "Solid"
+b:Ge/CapsuleBotCyl/IsParallel   = "True"
+s:Ge/CapsuleBotCyl/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleCapBot/Type            	= "TsSphere"
+s:Ge/CapsuleCapBot/Parent          	= "Capsule"
+s:Ge/CapsuleCapBot/Material        	= "Titanium"
+d:Ge/CapsuleCapBot/RMin           	= 0.0 mm
+d:Ge/CapsuleCapBot/RMax           	= Ge/CapsuleCylinder/RMax mm
+d:Ge/CapsuleCapBot/HL              	= 0.0925 mm
+d:Ge/CapsuleCapBot/TransZ          	= 1.895 mm  
+d:Ge/CapsuleCapBot/RotX        		= 270 deg
+d:Ge/CapsuleCapBot/RotY        		= 0 deg
+d:Ge/CapsuleCapBot/RotZ        		= 0 deg
+d:Ge/CapsuleCapBot/SPhi        		= 0 deg
+d:Ge/CapsuleCapBot/DPhi        		= 180 deg
+d:Ge/CapsuleCapBot/STheta      		= 0 deg
+d:Ge/CapsuleCapBot/DTheta      		= 180 deg
+s:Ge/CapsuleCapBot/Color           	= "shieldingcolor"
+s:Ge/CapsuleCapBot/DrawingStyle    	= "Solid"
+b:Ge/CapsuleCapBot/IsParallel       = "True"
+s:Ge/CapsuleCapBot/ParallelWorldName = "ShieldingWorld"
