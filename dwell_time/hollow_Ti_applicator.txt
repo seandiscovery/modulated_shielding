@@ -4,7 +4,9 @@
 # This file defines a single run with 1e6 histories. The total number of histories is 
 # determined by the scripting shell file ("hpc_scripting.sh" in this example). To determine
 # the total number of histories, inspect the parameter #SBATCH --array=0-x in the shell file. 
-# You can then calculate (# histories) = i:So/ActiveSource/NumberOfHistoriesInRun * x. 
+# You can then calculate (# histories) = i:So/ActiveSource/NumberOfHistoriesInRun * x.
+
+## Testing that my branches work! :) ## 
 
 ############ File 1: SimpleDoseScorer ############
 
