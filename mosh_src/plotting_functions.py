@@ -319,7 +319,7 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 
-	Parameters:
+	Parameters - required:
 		- file: str - input csv file
 		- bins: tuple - number of bins from the simulation in format (bins, bins)
 		- dose_grid_half: float - dosing grid half length
@@ -327,15 +327,21 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
 		- rng_X: tuple - range of x-axis
 		- rng_Y: tuple - range of y-axis
-		- source_rad: float - specifies radius within which voxel energies are set to 0. Must be nonzero if zero_source == True.
+
+	Parameters - optional - scaling:
 		- scale: bool - if True, normalizes extracted energy values to the dose delivered at norm_point
 		- norm_energy: float - energy extracted from norm_point. Must be nonzero if scale == True.
 		- dose: float - prescription dose delivered to norm_point. Must be nonzero if scale == True.
+
+	Parameters - optional - source zeroing:
 		- zero_source: float - if True, all voxels with r < source_rad have their energies set to 0
-		- std_dev: bool - if True, calculates standard dev for each voxel
-		- origin: tuple - sets the coordinate origin; used to shift the center of the region that is zeroed when zero_source = True
 		- zero_region: str - sets shape of region zeroed when zero_source = True; must be "circle" or "rectangle"
+		- origin: tuple - sets the coordinate origin; used to shift the center of the region that is zeroed when zero_source = True
+		- source_rad: float - specifies radius within which voxel energies are set to 0. Must be nonzero if zero_source == True.
 		- source_rect: tuple - defines width and height of rectangular area to zero in format (w, h)
+
+	Parameters - optional - standard deviation
+		- std_dev: bool - if True, calculates standard dev for each voxel
 
 	Returns:
 		- Tuple (X, Y, heights, std_dev), where
@@ -363,7 +369,8 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 	# Zero source for r < source_rad
 	if zero_source:
 		if ((source_rad <= 0)) and (zero_region == "circle"): raise ValueError("Source radius must be > 0 if zeroing source on contour plot")
-		if (source_rect == (0,0)) and (zero_region == "rectangle"): raise ValueError("Rectangle height, width must be > 0 if zeroing source")
+		if ((source_rect[0] <= 0) or (source_rect[1] <= 0)) and (zero_region == "rectangle"): 
+			raise ValueError("Rectangle height, width must be > 0 if zeroing source")
 		if (zero_region != "circle") and (zero_region != "rectangle"): raise ValueError("zero_region must be circle or rectangle")
 
 		# Convert voxel --> Cartesian
