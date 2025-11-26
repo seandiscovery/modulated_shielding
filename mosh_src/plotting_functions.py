@@ -94,13 +94,14 @@ def voxel_to_cm(voxels: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	return (voxels - int(bins/2))*lattice
 
-def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
+def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
 	""" 
 	Transform 2D Cartesian coordinates to polar coordinates. 
 
 	Parameters:
 		- cart_plane: np.ndarray - matrix of values to convert. Assumes first two columns are Cartesian coordinates; 
 		remaining columns returned unchanged.
+		- origin: tuple - contains coordinates of new origin during polar transformation
 
 	Returns:
 		- numpy array; first two columns in polar coordinates, remaining columns unchanged
@@ -108,8 +109,8 @@ def cart_to_polar(cart_plane: np.ndarray) -> np.ndarray:
 	num_cols = np.shape(cart_plane)[1]
 	polar_plane = np.empty(np.shape(cart_plane))
 	
-	polar_plane[:,0] = np.sqrt(cart_plane[:,0]**2 + cart_plane[:,1]**2) # (x, y) --> r
-	polar_plane[:,1] = np.arctan2(cart_plane[:,1], cart_plane[:,0]) # (x, y) --> theta
+	polar_plane[:,0] = np.sqrt((cart_plane[:,0] - origin[0])**2 + (cart_plane[:,1] - origin[1])**2) # (x, y) --> r
+	polar_plane[:,1] = np.arctan2(cart_plane[:,1] - origin[1], cart_plane[:,0] - origin[0]) # (x, y) --> theta
 	
 	for i in range(2, num_cols):
 		polar_plane[:,i] = cart_plane[:,i]
@@ -304,12 +305,21 @@ def plotter_1D(linear_energy: np.ndarray, ind_var: int=0, plot_rng: tuple=(0,0),
 	# Use Boolean mask b1 to extract x-axis, y-axis, and standard deviation values
 	return (linear_energy[:,ind_var][b1], linear_energy[:,2][b1], std_dev_of_sum[b1], std_dev_of_mean[b1], yerr)
 
+"""
+def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, source_rad: float=0.0, 
+	scale: bool=False, norm_energy: float=0.0, dose: float=0.0, zero_source: bool=False, 
+	std_dev: bool=False, origin: tuple=(0,0), zero_region: str="circle") -> tuple:
+	pass
+"""
+
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
-	source_rad: float=0.0, scale: bool=False, norm_energy: float=0.0, dose: float=0.0, zero_source: bool=False, std_dev: bool=False) -> tuple:
+	scale: bool=False, norm_energy: float=0.0, dose: float=0.0,
+	zero_source: bool=False, zero_region: str="circle", origin: tuple=(0,0), source_rad: float=0.0, source_rect: tuple=(0,0),
+	std_dev: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 
-	Parameters:
+	Parameters - required:
 		- file: str - input csv file
 		- bins: tuple - number of bins from the simulation in format (bins, bins)
 		- dose_grid_half: float - dosing grid half length
@@ -317,11 +327,20 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
 		- rng_X: tuple - range of x-axis
 		- rng_Y: tuple - range of y-axis
-		- source_rad: float - specifies radius within which voxel energies are set to 0. Must be nonzero if zero_source == True.
+
+	Parameters - optional - scaling:
 		- scale: bool - if True, normalizes extracted energy values to the dose delivered at norm_point
 		- norm_energy: float - energy extracted from norm_point. Must be nonzero if scale == True.
 		- dose: float - prescription dose delivered to norm_point. Must be nonzero if scale == True.
+
+	Parameters - optional - source zeroing:
 		- zero_source: float - if True, all voxels with r < source_rad have their energies set to 0
+		- zero_region: str - sets shape of region zeroed when zero_source = True; must be "circle" or "rectangle"
+		- origin: tuple - sets the coordinate origin; used to shift the center of the region that is zeroed when zero_source = True
+		- source_rad: float - specifies radius within which voxel energies are set to 0. Must be nonzero if zero_source == True.
+		- source_rect: tuple - defines width and height of rectangular area to zero in format (w, h)
+
+	Parameters - optional - standard deviation
 		- std_dev: bool - if True, calculates standard dev for each voxel
 
 	Returns:
@@ -349,18 +368,29 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	# Zero source for r < source_rad
 	if zero_source:
-		if source_rad == 0: raise ValueError("Source radius must be > 0 if zeroing source on contour plot")
+		if ((source_rad <= 0)) and (zero_region == "circle"): raise ValueError("Source radius must be > 0 if zeroing source on contour plot")
+		if ((source_rect[0] <= 0) or (source_rect[1] <= 0)) and (zero_region == "rectangle"): 
+			raise ValueError("Rectangle height, width must be > 0 if zeroing source")
+		if (zero_region != "circle") and (zero_region != "rectangle"): raise ValueError("zero_region must be circle or rectangle")
 
 		# Convert voxel --> Cartesian
 		plane[:,0] = voxel_to_cm(plane[:,0], bins[0], dose_grid_half*2/bins[0])
 		plane[:,1] = voxel_to_cm(plane[:,1], bins[1], dose_grid_half*2/bins[1])
 
-		# Convert Cartesian --> polar
-		polar_plane = cart_to_polar(plane)
+		if zero_region == "circle": 
+			# Convert Cartesian --> polar
+			polar_plane = cart_to_polar(plane, origin)
 
-		# Extract values with r < source_rad and set energies to zero
-		polar_mask = polar_plane[:,0] <= source_rad
-		plane[:,2][polar_mask] *= 0 # recall that plane has columns (x, y, energy, std_dev)
+			# Extract values with r < source_rad and set energies to zero
+			polar_mask = polar_plane[:,0] <= source_rad
+			plane[:,2][polar_mask] *= 0 # recall that plane has columns (x, y, energy, std_dev)
+
+		if zero_region == "rectangle":
+			cart_mask_x = (plane[:,0] <= (origin[0] + source_rect[0]/2)) & (plane[:,0] > (origin[0] - source_rect[0]/2))
+			cart_mask_y = (plane[:,1] <= (origin[1] + source_rect[1]/2)) & (plane[:,1] > (origin[1] - source_rect[1]/2))
+			total_cart_mask = cart_mask_x & cart_mask_y
+
+			plane[:,2][total_cart_mask] *= 0
 	
 	# Reshape the energy column of plane to a format compatible with the matplotlib countour function
 	height_values = np.reshape(plane[:,2], bins)[mask_X][:,mask_Y]

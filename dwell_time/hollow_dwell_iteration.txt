@@ -10,14 +10,15 @@
 
 ######## Tunable parameters ########
 
-# Make sure ARRAY_TASK_ID is included somehwere in the output file name
-s:Sc/DoseToPhantom/OutputFile = "../hollow_1e8_170_1.7_100Hx_results/hollow_1e6_170bins_1.7cmHL_ARRAY_TASK_ID"
+## Update with output file location ##
+s:Sc/DoseToPhantom/OutputFile = "../dwell_iter_results/dwell_pos_iter_ARRAY_TASK_ID"
 
-i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
-i:Ts/ShowHistoryCountAtInterval = 100000
+i:So/ActiveSource/NumberOfHistoriesInRun = 10000
+i:Ts/ShowHistoryCountAtInterval = 10000
 
 ## Dwell position ##
-d:Ge/Source/TransZ = -5.0 mm
+## Of note, setting TransZ=-5 mm (without spaces around = sign) does NOT throw a TOPAS syntax error ##
+d:Ge/Source/TransZ=-5 mm
 
 ## Define world ##
 d:Ge/World/HLX      = 10 cm
@@ -28,14 +29,14 @@ s:Ge/World/Material = "G4_WATER"
 ## Scorer geometry ##
 s:Ge/DoseGrid/Type       = "TsBox"
 s:Ge/DoseGrid/Parent     = "World"
-d:Ge/DoseGrid/HLX        =  1.7 cm
-d:Ge/DoseGrid/HLY        =  1.7 cm 
-d:Ge/DoseGrid/HLZ        =  1.7 cm 
+d:Ge/DoseGrid/HLX        =  5 cm
+d:Ge/DoseGrid/HLY        =  5 cm 
+d:Ge/DoseGrid/HLZ        =  5 cm 
 s:Ge/DoseGrid/Color      =  "red"
 b:Ge/DoseGrid/IsParallel = "T"
-i:Ge/DoseGrid/XBins      = 170
-i:Ge/DoseGrid/YBins      = 170
-i:Ge/DoseGrid/ZBins      = 170
+i:Ge/DoseGrid/XBins      = 50
+i:Ge/DoseGrid/YBins      = 50
+i:Ge/DoseGrid/ZBins      = 50
 
 ####################################
 
@@ -56,7 +57,7 @@ b:Sc/DoseToPhantom/OutputToConsole            = "F"
 s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
 s:Sc/DoseToPhantom/OutputType                 = "csv"
 #b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
-#s:Sc/DoseToPhantom/OutputFile                 = "../1rod/1rod_position1_1e6_85bins_2.125cmHL_ARRAY_TASK_ID"
+#s:Sc/DoseToPhantom/OutputFile                 = "../1rod/1rod_position1_1e6_85bins_2.125cmHL_5"
 #sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
 
 ## Local energy deposition of electrons ## 
