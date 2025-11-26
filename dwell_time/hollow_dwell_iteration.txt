@@ -17,7 +17,7 @@ i:So/ActiveSource/NumberOfHistoriesInRun = 10000
 i:Ts/ShowHistoryCountAtInterval = 10000
 
 ## Dwell position ##
-## Of note, setting TransZ=-5 mm (without spaces around = sign) does NOT throw a TOPAS syntax error
+## Of note, setting TransZ=-5 mm (without spaces around = sign) does NOT throw a TOPAS syntax error ##
 d:Ge/Source/TransZ=-5 mm
 
 ## Define world ##
