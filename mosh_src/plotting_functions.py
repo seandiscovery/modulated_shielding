@@ -6,7 +6,7 @@ from decimal import Decimal
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June - December 2023
+Author: Sean Mullane, June 2023 - Novemebr 2025
 
 Notes: 
 	- This file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
@@ -402,6 +402,74 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	# Note that we use Boolean masks mask_X and mask_Y defined above to extract X- and Y-axes
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
+
+#### Optimization functions ####
+
+def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_pos_Z: np.ndarray, 
+	source_dose_rate: float, bins: int, dose_grid_half: int, 
+	file_ext: str="", save: bool=True, save_name: str="matrix.npy",) -> np.ndarray:
+	"""
+	Construct dose rate matrix for linear penalty model and saves matrix in .npy format for later use.
+
+	Parameters - required:
+		- output_files: np.ndarray - array of output files, where each file is a simulation for one source dwell position
+		- dose_points: np.ndarray - array of tuples containing dose points in (X, Y, Z) format (constant across all simulations)
+		- dwell_pos_Z: np.ndarray - Z coordinate of dwell positions; we assume all sources have (x, y) = (0, 0) corresponding to applicator center
+
+		- source_dose_rate: float - dose rate at the source (constant across all simulations)
+		- bins: int - number of bins from the simulation (we assume bins_X = bins_Y = bins_Z) as defined in TOPAS parameter file 
+		- dose_grid_half: int - dosing grid half length as defined in TOPAS parameter file
+
+	Parameters - optional:
+		- file_ext: str - optional file extension to allow function to find output files
+		- save: bool - if True, saves constructed matrix
+		- save_name: str - name for matrix when saved, including file extension if applicable
+
+	Returns:
+		- Numpy array of size (num_dose_points, num_dwell_positions) were d_ij is the energy deposited at dosing point i
+		due to the source at dwell position j
+	"""
+	if np.shape(dwell_pos_Z)[0] != np.shape(output_files)[0]:
+		raise ValueError("Number of dwell position Z coordinates must match number of output files")
+
+	# Set the number of dose points and the number of dwell positions
+	num_dose_points = np.shape(dose_points)[0]
+	num_dwell_pos = np.shape(output_files)[0]
+
+	# Compute the lattice length for the simulation space in cm
+	lattice = dose_grid_half*2/bins
+
+	# Initialize and construct the dose rate matrix
+	D = np.zeros((num_dose_points, num_dwell_pos))
+
+	for j in range(num_dwell_pos):
+    	# Step 1 - extract normalized dose rate @ source
+		source_plane = cm_to_voxel(np.array(dwell_pos_Z[j]), bins, lattice)
+
+    	## Note - in this function, we're first holding the Z-axis constant by setting const_plane to the Z-coordinate
+    	## of the source and setting const_axis = 2 (recall 0 = X, Y = 1, Z = 2; see def of extract_norm_energy for more detail).
+    	## We then set the parameter norm_point (orresponding to the location of the source in the X, Y plane) to (X, Y) = (0, 0), 
+    	## since the source is centered in the applicator.
+		source_energy, __ = extract_norm_energy(file_ext + output_files[j], source_plane, 2, (0, 0), bins, lattice)
+
+	    # Step 2 - iterate over dose points, extract energy, and scale to source_energy
+		for i in range(num_dose_points):
+			dose_point_Z = dose_points[i][2] # for second index - 0 = X, 1 = Y, 2 = Z
+	        
+			dose_plane = cm_to_voxel(np.array(dose_point_Z), bins, lattice)
+
+	        ## Again, holding the Z-axis as constant first
+			dose_energy, __ = extract_norm_energy(file_ext + output_files[j], dose_plane, 2, (dose_points[i][0], dose_points[i][1]), 
+				bins, lattice)
+
+			normed_dose_energy = (dose_energy/source_energy)*source_dose_rate
+			D[i][j] = normed_dose_energy
+
+	# Save matrix
+	if save:
+		np.save(save_name, D)
+
+	return D
 
 #### Rotation functions ####
 
