@@ -407,7 +407,7 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_pos_Z: np.ndarray, 
 	source_dose_rate: float, bins: int, dose_grid_half: int, 
-	file_ext: str="", save: bool=True, save_name: str="matrix.npy",) -> np.ndarray:
+	file_ext: str="", save: bool=True, save_name: str="matrix.npy") -> np.ndarray:
 	"""
 	Construct dose rate matrix for linear penalty model and saves matrix in .npy format for later use.
 
