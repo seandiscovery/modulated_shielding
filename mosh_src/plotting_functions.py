@@ -448,7 +448,7 @@ def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_po
 
     	## Note - in this function, we're first holding the Z-axis constant by setting const_plane to the Z-coordinate
     	## of the source and setting const_axis = 2 (recall 0 = X, Y = 1, Z = 2; see def of extract_norm_energy for more detail).
-    	## We then set the parameter norm_point (orresponding to the location of the source in the X, Y plane) to (X, Y) = (0, 0), 
+    	## We then set the parameter norm_point (corresponding to the location of the source in the X, Y plane) to (X, Y) = (0, 0), 
     	## since the source is centered in the applicator.
 		source_energy, __ = extract_norm_energy(file_ext + output_files[j], source_plane, 2, (0, 0), bins, lattice)
 
