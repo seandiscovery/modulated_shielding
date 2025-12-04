@@ -117,6 +117,20 @@ def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
 
 	return polar_plane
 
+def polar_to_cart(coords: np.ndarray, origin: tuple) -> np.ndarray:
+    ## IN DEVELOPMENT ##
+    # For now, assuming Y axis is constant at Y = 0
+    # In other words, all our dosing points are assumed to be in the plane Y = 0 (for initial sims/debugging)
+    # Consider generalizing this to 3D using spherical coordinates?
+    cart = []
+    
+    for p in coords:
+        # p is a tuple = (X, Y)
+        c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
+        cart.append(c)
+
+    return np.array(cart)
+
 def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float) -> tuple:
 	"""
 	Given an input voxel, extracts the energy deposited in that voxel during the TOPAS simulation.
