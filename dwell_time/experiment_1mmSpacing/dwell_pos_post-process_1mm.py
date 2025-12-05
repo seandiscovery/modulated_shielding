@@ -54,8 +54,9 @@ for s in output_files:
 arg_sorted = np.argsort(np.array(indices))
 
 sort_output = output_files[arg_sorted]
+
 # Debugging
-print(sort_output)
+#print(sort_output)
 
 ## Define additional important parameters ##
 num_dwell_pos = np.shape(sort_output)[0]

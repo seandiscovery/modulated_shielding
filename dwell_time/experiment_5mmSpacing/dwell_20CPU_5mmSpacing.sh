@@ -27,16 +27,19 @@ for ((i=-25; i<0; i+=5)); do
 	neg_i=$(( -1*i )) # avoid using negative number as random seed in our TOPAS input file
 
 	# Make sure to use i (not neg_i) for the variable Ge/Source/TransZ
-	sed "s|^d:Ge/Source/TransZ[[:space:]]*=.*|d:Ge/Source/TransZ=${i} mm|" "$file" > "input_${neg_i}.txt"
-	echo "saved placeholder file ${neg_i}"
+	sed "s|^d:Ge/Source/TransZ[[:space:]]*=.*|d:Ge/Source/TransZ=${i} mm|" "$file" > "input_${i}.txt"
+	echo "saved placeholder file ${i}"
 
-	sed 's|ARRAY_TASK_ID|'"${neg_i}"'|g' "input_${neg_i}.txt" > input_${neg_i}.in
-	echo "saved input file ${neg_i}"
+	sed 's|ARRAY_TASK_ID|'"${i}"'|g' "input_${i}.txt" > "input_temp_${i}.txt"
+	sed 's|RANDOM_SEED|'"${neg_i}"'|g' "input_temp_${i}.txt" > input_${i}.in
+	echo "saved input file ${i}"
 
-	topas input_${neg_i}.in
+	topas input_${i}.in
 
-	rm input_${neg_i}.txt
-	rm input_${neg_i}.in
+	rm input_${i}.txt
+	rm input_temp_${i}.txt
+	rm input_${i}.in
+
 
 done
 
@@ -45,15 +48,17 @@ for ((i=0; i<=25; i+=5)); do
 	i_rand=$(( 10*i )) # avoid repeating random seed in TOPAS input file and overwriting input files created above
 
 	# Make sure to use i (not i_rand) for the variable Ge/Source/TransZ
-	sed "s|^d:Ge/Source/TransZ[[:space:]]*=.*|d:Ge/Source/TransZ=${i} mm|" "$file" > "input_${i_rand}.txt"
-	echo "saved placeholder file ${i_rand}"
+	sed "s|^d:Ge/Source/TransZ[[:space:]]*=.*|d:Ge/Source/TransZ=${i} mm|" "$file" > "input_${i}.txt"
+	echo "saved placeholder file ${i}"
 
-	sed 's|ARRAY_TASK_ID|'"${i_rand}"'|g' "input_${i_rand}.txt" > input_${i_rand}.in
-	echo "saved input file ${i_rand}"
+	sed 's|ARRAY_TASK_ID|'"${i}"'|g' "input_${i}.txt" > "input_temp_${i}.txt"
+	sed 's|RANDOM_SEED|'"${i_rand}"'|g' "input_temp_${i}.txt" > input_${i}.in
+	echo "saved input file ${i}"
 
-	topas input_${i_rand}.in
+	topas input_${i}.in
 
-	rm input_${i_rand}.txt
-	rm input_${i_rand}.in
+	rm input_${i}.txt
+	rm input_temp_${i}.txt
+	rm input_${i}.in
 
 done

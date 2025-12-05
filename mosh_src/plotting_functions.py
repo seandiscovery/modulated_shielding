@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from math import pi
 from decimal import Decimal
+from scipy.optimize import linprog
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June 2023 - Novemebr 2025
+Author: Sean Mullane, June 2023 - December 2025
 
 Notes: 
 	- This file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
@@ -484,6 +485,50 @@ def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_po
 		np.save(save_name, D)
 
 	return D
+
+def linear_penalty(D_min: float, D_max: float, M_l: float, M_u: float, num_dose_points: int, num_dwell_pos: int, D: np.ndarray) -> tuple:
+	"""
+	Run a linear penalty model given a dose rate matrix and optimization parameters.
+
+	Parameters - required:
+		- D_min: float - minimum dose threshold for model
+		- D_max: float - maximum dose threshold for model
+		- M_l: float - slope of penalty curve (penalty/dose) for dose < D_min
+		- M_u: float - slope of penalty curve (penalty/dose) for dose > D_max
+		- num_dose_points: int - number of dosing points in the region of interest to be irradiated
+		- num_dwell_pos: int - number of dwell positions in the applicator
+
+	Returns:
+		- Tuple (opt_func, X), where
+			- opt_func is the value of the optimization function when minimized
+			- X is an array of dwell times per dwell position (i.e. len(X) = num_dwell_pos)
+	"""
+	# Construct the bounds A_ub and b_ub
+	# Step 1 - construct A matrix for dwell time vector (size 2r x c)
+	A_t = np.vstack((-M_l*D[0,:], M_u*D[0,:]))
+	for j in range(1, num_dose_points):
+		A_t = np.vstack((A_t, -M_l*D[j,:], M_u*D[j,:]))
+
+	# Step 2 - construct A matrix for dose point vector (size 2r x r)
+	A_w = -1*np.identity(num_dose_points)
+	for j in range(0, num_dose_points):
+		A_w = np.insert(A_w, 2*j, A_w[2*j,:], axis=0)
+
+	# Step 3 - combine to create A_ub
+	A_ub = np.hstack((A_t, A_w))
+
+	# Step 4 - construct b_ub
+	b_ub = np.reshape(np.full((num_dose_points,2), [-M_l*D_min, M_u*D_max]), 2*num_dose_points)
+
+	# Construct the parameter vector c
+	# Number of 0 entries = number of dwell positions
+	# Number of 1 entries = number of dose points
+	c = np.concatenate((np.zeros(num_dwell_pos), np.ones(num_dose_points)))
+
+	# Set up and run the optimization
+	res = linprog(c, A_ub=A_ub, b_ub=b_ub)
+
+	return (res.fun, res.x[0:num_dwell_pos])
 
 #### Rotation functions ####
 

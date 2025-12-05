@@ -11,7 +11,7 @@
 ######## Tunable parameters ########
 
 ## Update with output file location ##
-s:Sc/DoseToPhantom/OutputFile = "5mmSpacing_results/dwell_20CPU_1n_1t_5mmSpace_ARRAY_TASK_ID"
+s:Sc/DoseToPhantom/OutputFile = "5mmSpacing_results/dwell-20CPU-1n-1t-5mmSpace_ARRAY_TASK_ID"
 
 i:So/ActiveSource/NumberOfHistoriesInRun = 100000
 i:Ts/ShowHistoryCountAtInterval = 10000
@@ -54,7 +54,7 @@ s:Sc/DoseToPhantom/InputFile                  = "/vast/palmer/apps/avx2/software
 # Local run
 #s:Sc/DoseToPhantom/InputFile                  = "/Applications/topas/examples/Brachytherapy/Muen.dat"
 
-Ts/Seed = ARRAY_TASK_ID
+Ts/Seed = RANDOM_SEED
 
 s:Sc/DoseToPhantom/Component                  = "DoseGrid"
 b:Sc/DoseToPhantom/OutputToConsole            = "F"
