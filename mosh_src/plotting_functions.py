@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from math import pi
 from decimal import Decimal
+from scipy.optimize import linprog
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June - December 2023
+Author: Sean Mullane, June 2023 - December 2025
 
 Notes: 
 	- This file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
@@ -116,6 +117,20 @@ def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
 		polar_plane[:,i] = cart_plane[:,i]
 
 	return polar_plane
+
+def polar_to_cart(coords: np.ndarray, origin: tuple) -> np.ndarray:
+    ## IN DEVELOPMENT ##
+    # For now, assuming Y axis is constant at Y = 0
+    # In other words, all our dosing points are assumed to be in the plane Y = 0 (for initial sims/debugging)
+    # Consider generalizing this to 3D using spherical coordinates?
+    cart = []
+    
+    for p in coords:
+        # p is a tuple = (X, Y)
+        c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
+        cart.append(c)
+
+    return np.array(cart)
 
 def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float) -> tuple:
 	"""
@@ -402,6 +417,119 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	# Note that we use Boolean masks mask_X and mask_Y defined above to extract X- and Y-axes
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
+
+#### Optimization functions ####
+
+def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_pos_Z: np.ndarray, 
+	source_dose_rate: float, bins: int, dose_grid_half: int, 
+	file_ext: str="", save: bool=True, save_name: str="matrix.npy") -> np.ndarray:
+	"""
+	Construct dose rate matrix for linear penalty model and saves matrix in .npy format for later use.
+
+	Parameters - required:
+		- output_files: np.ndarray - array of output files, where each file is a simulation for one source dwell position
+		- dose_points: np.ndarray - array of tuples containing dose points in (X, Y, Z) format (constant across all simulations)
+		- dwell_pos_Z: np.ndarray - Z coordinate of dwell positions; we assume all sources have (x, y) = (0, 0) corresponding to applicator center
+
+		- source_dose_rate: float - dose rate at the source (constant across all simulations)
+		- bins: int - number of bins from the simulation (we assume bins_X = bins_Y = bins_Z) as defined in TOPAS parameter file 
+		- dose_grid_half: int - dosing grid half length as defined in TOPAS parameter file
+
+	Parameters - optional:
+		- file_ext: str - optional file extension to allow function to find output files
+		- save: bool - if True, saves constructed matrix
+		- save_name: str - name for matrix when saved, including file extension if applicable
+
+	Returns:
+		- Numpy array of size (num_dose_points, num_dwell_positions) were d_ij is the energy deposited at dosing point i
+		due to the source at dwell position j
+	"""
+	if np.shape(dwell_pos_Z)[0] != np.shape(output_files)[0]:
+		raise ValueError("Number of dwell position Z coordinates must match number of output files")
+
+	# Set the number of dose points and the number of dwell positions
+	num_dose_points = np.shape(dose_points)[0]
+	num_dwell_pos = np.shape(output_files)[0]
+
+	# Compute the lattice length for the simulation space in cm
+	lattice = dose_grid_half*2/bins
+
+	# Initialize and construct the dose rate matrix
+	D = np.zeros((num_dose_points, num_dwell_pos))
+
+	for j in range(num_dwell_pos):
+    	# Step 1 - extract normalized dose rate @ source
+		source_plane = cm_to_voxel(np.array(dwell_pos_Z[j]), bins, lattice)
+
+    	## Note - in this function, we're first holding the Z-axis constant by setting const_plane to the Z-coordinate
+    	## of the source and setting const_axis = 2 (recall 0 = X, Y = 1, Z = 2; see def of extract_norm_energy for more detail).
+    	## We then set the parameter norm_point (corresponding to the location of the source in the X, Y plane) to (X, Y) = (0, 0), 
+    	## since the source is centered in the applicator.
+		source_energy, __ = extract_norm_energy(file_ext + output_files[j], source_plane, 2, (0, 0), bins, lattice)
+
+	    # Step 2 - iterate over dose points, extract energy, and scale to source_energy
+		for i in range(num_dose_points):
+			dose_point_Z = dose_points[i][2] # for second index - 0 = X, 1 = Y, 2 = Z
+	        
+			dose_plane = cm_to_voxel(np.array(dose_point_Z), bins, lattice)
+
+	        ## Again, holding the Z-axis as constant first
+			dose_energy, __ = extract_norm_energy(file_ext + output_files[j], dose_plane, 2, (dose_points[i][0], dose_points[i][1]), 
+				bins, lattice)
+
+			normed_dose_energy = (dose_energy/source_energy)*source_dose_rate
+			D[i][j] = normed_dose_energy
+
+	# Save matrix
+	if save:
+		np.save(save_name, D)
+
+	return D
+
+def linear_penalty(D_min: float, D_max: float, M_l: float, M_u: float, num_dose_points: int, num_dwell_pos: int, D: np.ndarray) -> tuple:
+	"""
+	Run a linear penalty model given a dose rate matrix and optimization parameters.
+
+	Parameters - required:
+		- D_min: float - minimum dose threshold for model
+		- D_max: float - maximum dose threshold for model
+		- M_l: float - slope of penalty curve (penalty/dose) for dose < D_min
+		- M_u: float - slope of penalty curve (penalty/dose) for dose > D_max
+		- num_dose_points: int - number of dosing points in the region of interest to be irradiated
+		- num_dwell_pos: int - number of dwell positions in the applicator
+
+	Returns:
+		- Tuple (opt_func, X, W), where
+			- opt_func is the value of the optimization function when minimized
+			- X is an array of dwell times per dwell position (i.e. len(X) = num_dwell_pos)
+			- W is an array of coefficients for cost function that gives optimal (minimal) cost function value
+	"""
+	# Construct the bounds A_ub and b_ub
+	# Step 1 - construct A matrix for dwell time vector (size 2r x c)
+	A_t = np.vstack((-M_l*D[0,:], M_u*D[0,:]))
+	for j in range(1, num_dose_points):
+		A_t = np.vstack((A_t, -M_l*D[j,:], M_u*D[j,:]))
+
+	# Step 2 - construct A matrix for dose point vector (size 2r x r)
+	A_w = -1*np.identity(num_dose_points)
+	for j in range(0, num_dose_points):
+		A_w = np.insert(A_w, 2*j, A_w[2*j,:], axis=0)
+
+	# Step 3 - combine to create A_ub
+	A_ub = np.hstack((A_t, A_w))
+
+	# Step 4 - construct b_ub
+	b_ub = np.reshape(np.full((num_dose_points,2), [-M_l*D_min, M_u*D_max]), 2*num_dose_points)
+
+	# Construct the parameter vector c
+	# Number of 0 entries = number of dwell positions
+	# Number of 1 entries = number of dose points
+	c = np.concatenate((np.zeros(num_dwell_pos), np.ones(num_dose_points)))
+
+	# Set up and run the optimization
+	res = linprog(c, A_ub=A_ub, b_ub=b_ub)
+
+	return (res.fun, res.x[0:num_dwell_pos], res.x[num_dwell_pos:])
 
 #### Rotation functions ####
 
