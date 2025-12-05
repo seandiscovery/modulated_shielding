@@ -499,9 +499,10 @@ def linear_penalty(D_min: float, D_max: float, M_l: float, M_u: float, num_dose_
 		- num_dwell_pos: int - number of dwell positions in the applicator
 
 	Returns:
-		- Tuple (opt_func, X), where
+		- Tuple (opt_func, X, W), where
 			- opt_func is the value of the optimization function when minimized
 			- X is an array of dwell times per dwell position (i.e. len(X) = num_dwell_pos)
+			- W is an array of coefficients for cost function that gives optimal (minimal) cost function value
 	"""
 	# Construct the bounds A_ub and b_ub
 	# Step 1 - construct A matrix for dwell time vector (size 2r x c)
@@ -528,7 +529,7 @@ def linear_penalty(D_min: float, D_max: float, M_l: float, M_u: float, num_dose_
 	# Set up and run the optimization
 	res = linprog(c, A_ub=A_ub, b_ub=b_ub)
 
-	return (res.fun, res.x[0:num_dwell_pos])
+	return (res.fun, res.x[0:num_dwell_pos], res.x[num_dwell_pos:])
 
 #### Rotation functions ####
 
