@@ -1,6 +1,6 @@
 # Allows Python to find mosh_src if this file is moved
 import sys
-sys.path.insert(0, "/Users/seanmullane/Desktop/Research_2025/modulated_shielding")
+sys.path.insert(0, "../")
 
 # Add functionality to parse folders
 import os
