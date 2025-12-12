@@ -1,0 +1,334 @@
+#### Current standard of care - hollow Ti applicator ####
+#### All parameters in one file for optimization ####
+
+# This file defines a single run with 1e6 histories. The total number of histories is 
+# determined by the scripting shell file ("hpc_scripting.sh" in this example). To determine
+# the total number of histories, inspect the parameter #SBATCH --array=0-x in the shell file. 
+# You can then calculate (# histories) = i:So/ActiveSource/NumberOfHistoriesInRun * x. 
+
+############ File 1: SimpleDoseScorer ############
+
+######## Tunable parameters ########
+
+## Update with output file location ##
+s:Sc/DoseToPhantom/OutputFile = "1mmSpace-1e6_results/dwell-20CPU-1n-1t-1mmSpace-1e6_ARRAY_TASK_ID"
+
+i:So/ActiveSource/NumberOfHistoriesInRun = 1000000
+i:Ts/ShowHistoryCountAtInterval = 10000
+
+## Set number of threads ##
+## Should match parameter --cpus-per-task in scripting file
+i:Ts/NumberOfThreads = 20
+
+## Dwell position ##
+## Of note, setting TransZ=-5 mm (without spaces around = sign) does NOT throw a TOPAS syntax error ##
+d:Ge/Source/TransZ=-5 mm
+
+## Define world ##
+d:Ge/World/HLX      = 10 cm
+d:Ge/World/HLY      = 10 cm
+d:Ge/World/HLZ      = 10 cm
+s:Ge/World/Material = "G4_WATER"
+
+## Scorer geometry ##
+s:Ge/DoseGrid/Type       = "TsBox"
+s:Ge/DoseGrid/Parent     = "World"
+d:Ge/DoseGrid/HLX        =  5 cm
+d:Ge/DoseGrid/HLY        =  5 cm 
+d:Ge/DoseGrid/HLZ        =  5 cm 
+s:Ge/DoseGrid/Color      =  "red"
+b:Ge/DoseGrid/IsParallel = "T"
+i:Ge/DoseGrid/XBins      = 100
+i:Ge/DoseGrid/YBins      = 100
+i:Ge/DoseGrid/ZBins      = 100
+
+####################################
+
+## Dose scoring - TLE gives more consistent results compared to consensus data for radial dose func ##
+s:Sc/DoseToPhantom/Quantity                   = "TrackLengthEstimator"
+sv:Sc/DoseToPhantom/Report                    = 2 "Sum" "Standard_Deviation" #1 "Sum"
+
+# Run on HPC
+s:Sc/DoseToPhantom/InputFile                  = "/vast/palmer/apps/avx2/software/TOPAS/3.9-foss-2022b/examples/Brachytherapy/Muen.dat"
+
+# Local run
+#s:Sc/DoseToPhantom/InputFile                  = "/Applications/topas/examples/Brachytherapy/Muen.dat"
+
+#Ts/Seed = ARRAY_TASK_ID
+Ts/Seed = RANDOM_SEED
+
+s:Sc/DoseToPhantom/Component                  = "DoseGrid"
+b:Sc/DoseToPhantom/OutputToConsole            = "F"
+s:Sc/DoseToPhantom/IfOutputFileAlreadyExists  = "Increment"
+s:Sc/DoseToPhantom/OutputType                 = "csv"
+#b:Sc/DoseToPhantom/DICOMOutput32BitsPerPixel  = "True"
+#s:Sc/DoseToPhantom/OutputFile                 = "../1rod/1rod_position1_1e6_85bins_2.125cmHL_5"
+#sv:Sc/DoseToPhantom/OnlyIncludeParticlesNamed = 1 "gamma"
+
+## Local energy deposition of electrons ## 
+d:Ph/Default/CutForElectron = 10 cm
+
+## PHYSICS MODEL TO USE - this model was recommended in Berumen, Brachytherapy 20(2021) ##
+sv:Ph/Default/Modules = 1 "g4em-livermore"
+
+## Number of Histories ##
+b:Gr/Enable = "T"
+#i:So/ActiveSource/NumberOfHistoriesInRun = 1000
+#i:Ts/ShowHistoryCountAtInterval = 10
+
+## Graphics - for debugging ##
+#b:Ts/PauseBeforeQuit = "T"
+#s:Gr/ViewA/Type        = "OpenGL"
+#b:Gr/ViewA/IncludeTrajectories = "False"
+#Ts/UseQt = "True"
+
+b:Ts/ShowCPUTime = "True" # Show CPU time used in various phases of the simulation
+i:Ts/TrackingVerbosity = 0
+
+############ File 2: GammaMedSource In SmartApp ############
+
+## Define geometry worlds ##
+
+sv:Ph/Default/LayeredMassGeometryWorlds =  4 "TandemWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  6 "TandemWorld" "BoxWorld" "ChannelWorld" "ShieldingWorld" "AirCapWorld" "ActiveSourceWorld" 
+
+#sv:Ph/Default/LayeredMassGeometryWorlds =  4 "TandemWorld" "ChannelWorld" "ShieldingWorld" "ActiveSourceWorld" 
+
+### Position source in applicator air channel - original Z at tip of tandem is -22.557 ##
+# see TransZ variable in tunable parameters section above for dwell position
+d:Ge/Source/TransY = 0.0 mm # location = inside air channel (center of applicator)
+#d:Ge/Source/TransY = 1.8 mm # location = inside channel 1
+#d:Ge/Source/TransY = 2.2 mm # UCSF offset
+#d:Ge/Source/TransY = 2.32 mm # UCSF multirod applicator, offset for 12 oclock rod
+
+############ File 3: SMART applicator ############
+
+##### Define Tungsten #####
+sv:Ma/BlockTi/Components = 1 "Titanium" 
+uv:Ma/BlockTi/Fractions  = 1 1.0
+d:Ma/BlockTi/Density     = 4.54 g/cm3
+
+##### TANDEM GEOMETRY #####
+s:Ge/SMARTApplicator/Type   = "Group"
+s:Ge/SMARTApplicator/Parent = "World"
+
+s:Ge/TandemGeometry/Type              	= "Group"
+s:Ge/TandemGeometry/Parent            	= "SMARTApplicator"
+b:Ge/TandemGeometry/IsParallel        	= "True"
+s:Ge/TandemGeometry/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/Tandem/Type              		= "TsCylinder"
+s:Ge/Tandem/Parent            		= "TandemGeometry"
+s:Ge/Tandem/Material          		= "BlockTi"
+d:Ge/Tandem/RMin              		= 2.0 mm
+d:Ge/Tandem/RMax              		= 3.0 mm
+d:Ge/Tandem/HL                		= 25 mm
+d:Ge/Tandem/SPhi              		= 0. deg
+d:Ge/Tandem/DPhi              		= 360. deg
+s:Ge/Tandem/Color             		= "Gray"
+s:Ge/Tandem/DrawingStyle      		= "Solid"
+b:Ge/Tandem/IsParallel        		= "True"
+s:Ge/Tandem/ParallelWorldName 		= "TandemWorld"
+
+s:Ge/TandemCap/Type         		= "TsSphere"
+s:Ge/TandemCap/Material     		= "BlockTi"
+s:Ge/TandemCap/Parent       		= "TandemGeometry"
+d:Ge/TandemCap/RMin         		= 0 mm
+d:Ge/TandemCap/RMax         		= Ge/Tandem/RMax mm
+d:Ge/TandemCap/HL           		= 1.5 mm
+d:Ge/TandemCap/TransZ      		= -25 mm
+d:Ge/TandemCap/RotX        		= 90 deg
+d:Ge/TandemCap/RotY        		= 0 deg
+d:Ge/TandemCap/RotZ        		= 0 deg
+d:Ge/TandemCap/SPhi        		= 0 deg
+d:Ge/TandemCap/DPhi        		= 180 deg
+d:Ge/TandemCap/STheta      		= 0 deg
+d:Ge/TandemCap/DTheta      		= 180 deg
+s:Ge/TandemCap/Color        		= "gray"
+s:Ge/TandemCap/DrawingStyle 		= "Solid"
+b:Ge/TandemCap/IsParallel        	= "True"
+s:Ge/TandemCap/ParallelWorldName 	= "TandemWorld"
+
+s:Ge/TandemAirChan/Type             	= "TsCylinder"
+s:Ge/TandemAirChan/Parent           	= "TandemGeometry"
+s:Ge/TandemAirChan/Material         	= "Air"
+d:Ge/TandemAirChan/RMin             	= 0.0 mm
+d:Ge/TandemAirChan/RMax             	= Ge/Tandem/RMin mm
+d:Ge/TandemAirChan/HL               	= Ge/Tandem/HL mm
+d:Ge/TandemAirChan/SPhi             	= 0. deg
+d:Ge/TandemAirChan/DPhi             	= 360. deg
+s:Ge/TandemAirChan/Color            	= "Black"
+s:Ge/TandemAirChan/DrawingStyle     	= "Solid"
+#b:Ge/TandemAirChan/Invisible 		= "True"
+b:Ge/TandemAirChan/IsParallel       	= "True"
+s:Ge/TandemAirChan/ParallelWorldName 	= "TandemWorld"
+
+############ File 4: Yb source ############
+
+## Materials - AISI 316L stainless steel for capusule, AISI 304 for cable ##
+## Note: publications list density as 8.06 g/cm3 ##
+sv:Ma/CapsuleSteel/Components = 9 "Carbon" "Chromium" "Iron" "Manganese" "Molybdenum" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/CapsuleSteel/Fractions  = 9 0.0003 0.18 0.61895 0.02 0.03 0.14 0.00045 0.01 0.0003
+d:Ma/CapsuleSteel/Density     = 8.0 g/cm3
+
+sv:Ma/CableSteel/Components = 8 "Carbon" "Chromium" "Iron" "Manganese" "Nickel" "Phosphorus" "Silicon" "Sulfur"
+uv:Ma/CableSteel/Fractions  = 8 0.0008 0.20 0.66345 0.02 0.105 0.00045 0.01 0.0003
+d:Ma/CableSteel/Density     = 5.60 g/cm3
+
+sv:Ma/ActiveMaterialS/Components = 1 "Ytterbium"
+uv:Ma/ActiveMaterialS/Fractions = 1 1.0
+d:Ma/ActiveMaterialS/Density = 7.0 g/cm3
+
+## Radioactive source ##
+s:So/ActiveSource/Type                       = "Volumetric"
+s:So/ActiveSource/Component                  = "ActiveSourceGeometry"
+sc:So/ActiveSource/ActiveMaterial            = "ActiveMaterialS"
+s:So/ActiveSource/BeamParticle               = "gamma"
+b:So/ActiveSource/RecursivelyIncludeChildren = "T"
+i:So/ActiveSource/MaxNumberOfPointsToSample  = 1000000000
+s:So/ActiveSource/BeamEnergySpectrumType     = "Discrete"
+
+## Spectrum and source design: Reynoso, JACMP 2017, 18:4:193-199 ##
+dv:So/ActiveSource/BeamEnergySpectrumValues = 16 49.77 50.74 57.30 57.51 57.90 59.03 59.21 63.12 93.62 109.78 118.19 130.52 177.21 197.96 261.08 307.74 keV
+
+uv:So/ActiveSource/BeamEnergySpectrumWeightsUnscaled = 16 0.532 0.94 0.0993 0.192 0.00379 0.0647 0.0172 0.442 0.0261 0.1747 0.01869 0.1131 0.2216 0.358 0.01715 0.1005
+
+uv:So/ActiveSource/BeamEnergySpectrumWeights = 0.30113 * So/ActiveSource/BeamEnergySpectrumWeightsUnscaled
+
+## SOURCE GEOMETRY ##
+s:Ge/Source/Type   = "Group"
+s:Ge/Source/Parent = "World"
+s:Ge/ActiveSourceGeometry/Type              = "Group"
+s:Ge/ActiveSourceGeometry/Parent            = "Source"
+b:Ge/ActiveSourceGeometry/IsParallel        = "True"
+s:Ge/ActiveSourceGeometry/ParallelWorldName = "ActiveSourceWorld"
+
+s:Ge/ActiveCylinder/Type              = "TsCylinder"
+s:Ge/ActiveCylinder/Parent            = "ActiveSourceGeometry"
+s:Ge/ActiveCylinder/Material          = "ActiveMaterialS"
+d:Ge/ActiveCylinder/RMin              = 0 mm
+d:Ge/ActiveCylinder/RMax              = 0.3 mm
+d:Ge/ActiveCylinder/HL                = 1.75 mm
+d:Ge/ActiveCylinder/SPhi              = 0. deg
+d:Ge/ActiveCylinder/DPhi              = 360. deg
+s:Ge/ActiveCylinder/Color             = "white"
+s:Ge/ActiveCylinder/DrawingStyle      = "Solid"
+b:Ge/ActiveCylinder/IsParallel        = "True"
+s:Ge/ActiveCylinder/ParallelWorldName = "ActiveSourceWorld"
+
+## CAPSULE GROUP COMPONENT ##
+s:Ge/Capsule/Type              = "Group"
+s:Ge/Capsule/Parent            = "Source"
+d:Ge/Capsule/TransZ            = -0.035 mm
+b:Ge/Capsule/IsParallel        = "True"
+s:Ge/Capsule/ParallelWorldName = "ShieldingWorld"
+iv:Gr/Color/shieldingcolor     = 4 255 255 255 80
+
+s:Ge/CapsuleAirCap/Type              = "Group"
+s:Ge/CapsuleAirCap/Parent            = "Source"
+d:Ge/CapsuleAirCap/TransZ            = -0.035 mm
+b:Ge/CapsuleAirCap/IsParallel        = "True"
+s:Ge/CapsuleAirCap/ParallelWorldName = "AirCapWorld"
+
+s:Ge/CapsuleCylinder/Type         = "TsCylinder"
+s:Ge/CapsuleCylinder/Material     = "Titanium"
+s:Ge/CapsuleCylinder/Parent       = "Capsule"
+d:Ge/CapsuleCylinder/RMin         = 0.35 mm
+d:Ge/CapsuleCylinder/RMax         = 0.425 mm
+d:Ge/CapsuleCylinder/HL           = 1.785 mm
+d:Ge/CapsuleCylinder/SPhi         = 0. deg
+d:Ge/CapsuleCylinder/DPhi         = 360. deg
+d:Ge/CapsuleCylinder/TransZ       = 0 mm
+s:Ge/CapsuleCylinder/Color        = "shieldingcolor"
+s:Ge/CapsuleCylinder/DrawingStyle = "Solid"
+b:Ge/CapsuleCylinder/IsParallel   = "True"
+s:Ge/CapsuleCylinder/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleAirCylinder/Type 		 = "TsCylinder"
+s:Ge/CapsuleAirCylinder/Material     = "Air" 
+s:Ge/CapsuleAirCylinder/Parent       = "Capsule"
+d:Ge/CapsuleAirCylinder/RMin         = 0.0 mm
+d:Ge/CapsuleAirCylinder/RMax         = 0.35 mm
+d:Ge/CapsuleAirCylinder/HL           = Ge/CapsuleCylinder/HL mm
+d:Ge/CapsuleAirCylinder/SPhi         = 0. deg
+d:Ge/CapsuleAirCylinder/DPhi         = 360. deg
+d:Ge/CapsuleAirCylinder/TransZ       = 0 mm
+#b:Ge/CapsuleAirCylinder/Invisible   = "True"
+b:Ge/CapsuleAirCylinder/IsParallel   = "True"
+s:Ge/CapsuleAirCylinder/Color        = "blue"
+s:Ge/CapsuleAirCylinder/DrawingStyle = "Solid"
+s:Ge/CapsuleAirCylinder/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleConeAir/Type            = "TsSphere"
+s:Ge/CapsuleConeAir/Parent          = "CapsuleAirCap"
+s:Ge/CapsuleConeAir/Material        = "Air"
+d:Ge/CapsuleConeAir/RMin           	= 0.0 mm
+d:Ge/CapsuleConeAir/RMax           	= Ge/CapsuleAirCylinder/RMax mm
+d:Ge/CapsuleConeAir/HL              = 0.175 mm
+d:Ge/CapsuleConeAir/TransZ          = 1.785 mm
+d:Ge/CapsuleConeAir/RotX        	= 270 deg
+d:Ge/CapsuleConeAir/RotY        	= 0 deg
+d:Ge/CapsuleConeAir/RotZ        	= 0 deg
+d:Ge/CapsuleConeAir/SPhi        	= 0 deg
+d:Ge/CapsuleConeAir/DPhi        	= 180 deg
+d:Ge/CapsuleConeAir/STheta      	= 0 deg
+d:Ge/CapsuleConeAir/DTheta      	= 180 deg
+#b:Ge/CapsuleConeAir/Invisible	    = "True"  
+b:Ge/CapsuleConeAir/IsParallel      = "True"
+s:Ge/CapsuleConeAir/Color           = "blue"
+s:Ge/CapsuleConeAir/ParallelWorldName = "AirCapWorld"
+s:Ge/CapsuleConeAir/DrawingStyle      = "Solid"
+
+s:Ge/CapsuleCapTop/Type            = "TsSphere"
+s:Ge/CapsuleCapTop/Parent          = "Capsule"
+s:Ge/CapsuleCapTop/Material        = "Titanium"
+d:Ge/CapsuleCapTop/RMin           	= 0.0 mm
+d:Ge/CapsuleCapTop/RMax           	= Ge/CapsuleCylinder/RMax mm
+#d:Ge/CapsuleCapTop/HL              = 0.2225 mm
+d:Ge/CapsuleCapTop/HLZ              = 0.2225 mm
+d:Ge/CapsuleCapTop/TransZ          	= -1.785 mm  
+d:Ge/CapsuleCapTop/RotX        		= 90 deg
+d:Ge/CapsuleCapTop/RotY        		= 0 deg
+d:Ge/CapsuleCapTop/RotZ        		= 0 deg
+d:Ge/CapsuleCapTop/SPhi        		= 0 deg
+d:Ge/CapsuleCapTop/DPhi        		= 180 deg
+d:Ge/CapsuleCapTop/STheta      		= 0 deg
+d:Ge/CapsuleCapTop/DTheta      		= 180 deg
+s:Ge/CapsuleCapTop/Color           	= "shieldingcolor"
+s:Ge/CapsuleCapTop/DrawingStyle    	= "Solid"
+b:Ge/CapsuleCapTop/IsParallel       = "True"
+s:Ge/CapsuleCapTop/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleBotCyl/Type         = "TsCylinder"
+s:Ge/CapsuleBotCyl/Material     = "Titanium"
+s:Ge/CapsuleBotCyl/Parent       = "Capsule"
+d:Ge/CapsuleBotCyl/RMin         = 0.0 mm
+d:Ge/CapsuleBotCyl/RMax         = Ge/CapsuleCylinder/RMax mm
+d:Ge/CapsuleBotCyl/HL           = 0.055 mm
+d:Ge/CapsuleBotCyl/SPhi         = 0. deg
+d:Ge/CapsuleBotCyl/DPhi         = 360. deg
+d:Ge/CapsuleBotCyl/TransZ       = 1.84 mm
+s:Ge/CapsuleBotCyl/Color        = "shieldingcolor"
+s:Ge/CapsuleBotCyl/DrawingStyle = "Solid"
+b:Ge/CapsuleBotCyl/IsParallel   = "True"
+s:Ge/CapsuleBotCyl/ParallelWorldName = "ShieldingWorld"
+
+s:Ge/CapsuleCapBot/Type            	= "TsSphere"
+s:Ge/CapsuleCapBot/Parent          	= "Capsule"
+s:Ge/CapsuleCapBot/Material        	= "Titanium"
+d:Ge/CapsuleCapBot/RMin           	= 0.0 mm
+d:Ge/CapsuleCapBot/RMax           	= Ge/CapsuleCylinder/RMax mm
+d:Ge/CapsuleCapBot/HL              	= 0.0925 mm
+d:Ge/CapsuleCapBot/TransZ          	= 1.895 mm  
+d:Ge/CapsuleCapBot/RotX        		= 270 deg
+d:Ge/CapsuleCapBot/RotY        		= 0 deg
+d:Ge/CapsuleCapBot/RotZ        		= 0 deg
+d:Ge/CapsuleCapBot/SPhi        		= 0 deg
+d:Ge/CapsuleCapBot/DPhi        		= 180 deg
+d:Ge/CapsuleCapBot/STheta      		= 0 deg
+d:Ge/CapsuleCapBot/DTheta      		= 180 deg
+s:Ge/CapsuleCapBot/Color           	= "shieldingcolor"
+s:Ge/CapsuleCapBot/DrawingStyle    	= "Solid"
+b:Ge/CapsuleCapBot/IsParallel       = "True"
+s:Ge/CapsuleCapBot/ParallelWorldName = "ShieldingWorld"
