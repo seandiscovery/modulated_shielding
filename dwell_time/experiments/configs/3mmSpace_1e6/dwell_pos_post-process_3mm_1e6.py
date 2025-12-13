@@ -45,8 +45,19 @@ save_name = "D_3mmSpace_1e6.npy"
 
 dose_points = polar_to_cart(coords, origin)
 #dwell_pos_transZ = np.array([x for x in range(dwell_start, dwell_end + 1)])/10 # dividing by 10 to convert mm --> cm
-dwell_pos_transZ = np.array([x for x in np.arange(dwell_start, dwell_end + 1, spacing)])/10
+#dwell_pos_transZ = np.array([x for x in np.arange(dwell_start, dwell_end + 1, spacing)])/10
 #print(dwell_pos_transZ) # debugging
+
+### Of note - need to correct expression for dwell_pos_transZ due to an off-by-one error ###
+# The C-style loop in my scripting file loops -25 mm ---> 0 mm in increments of step = 3 mm, 
+# and then STOPS at 0 mm, resets, and starts incrementing again in steps of 3 mm.
+# This leads to difference between the C-style loops and np.arange(start, end + 1, spacing).
+# Strictly speaking, resetting your increments at 0 mm probably makes less sense from a practical 
+# standpoint versus continuing the increments; future simulations will update this. For now
+# we're updating the expression for dwell_pos_transZ accordingly to avoid throwing out a bunch of data.
+transZ_1 = np.array([x for x in np.arange(dwell_start, 0, spacing)])
+transZ_2 = np.array([x for x in np.arange(0, dwell_end + 1, spacing)])
+dwell_pos_transZ = np.hstack((transZ_1, transZ_2))/10
 
 ## Extract output files ##
 # Note that output file array is sorted (lowest dwell pos) --> (highest dwell pos)
