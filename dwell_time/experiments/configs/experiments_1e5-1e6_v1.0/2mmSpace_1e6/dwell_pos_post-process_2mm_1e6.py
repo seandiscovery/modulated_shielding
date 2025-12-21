@@ -18,32 +18,45 @@ from mosh_src.plotting_functions import *
 
 ## Choose dose points and origin ##
 # For initial sims, choosing dosing points along a circle in the (X, Z) plane with Y = 0 cm and center = (2, 1) cm
-coords = np.array([(0.5, 0), (0.5, pi/4), (0.5, pi/2), (0.5, 3*pi/4), (0.5, pi), (0.5, 5*pi/4), (0.5, 6*pi/4), (0.5, 7*pi/4)])
-origin = (2, 1)
+#coords = np.array([(0.5, 0), (0.5, pi/4), (0.5, pi/2), (0.5, 3*pi/4), (0.5, pi), (0.5, 5*pi/4), (0.5, 6*pi/4), (0.5, 7*pi/4)])
+#origin = (2, 1)
+
+# Choosing 1,000 dose points uniformly distributed over a unit sphere centered at (2, 0, 1) cm
+num_dose_points = 1000
+origin = (2, 0, 1)
 
 ## Set dwell positions ##
 # These are defined in the bash file used to run the simulations
 # 1 mm spacing from -25 cm to +25 mm
 dwell_start = -25 # mm
 dwell_end = 25 # mm
+spacing = 2 # mm
 
 ## Choose source dose rate ##
 source_dose_rate = 5 # Gy/s - same across all output files
 
 ## Location of output files ##
-output_location = "1mmSpace-1e6_results/"
+#output_location = "2mmSpace-1e6_results/"
+output_location = "2mmSpace-1e6_npy_files/"
+
+## Name of dose points file ##
+#dose_file = "/Users/seanmullane/Desktop/Research_2025/modulated_shielding/dwell_time/experiments/results/dose_point_file_12-20-2025.npy"
+dose_file = "../mosh_src/dose_point_file_12-20-2025.npy"
 
 ## Number of bins and dosing grid half length - set in TOPAS parameter file ##
 bins_mosh = 100
 dose_grid_half_mosh = 5 # cm
 
-## Name for outpute dose rate matrix file ##
-save_name = "D_1mmSpace_1e6.npy"
+## Name for output dose rate matrix file ##
+save_name = "D_2mmSpace_1e6_1e3dosePoints.npy"
 
 ############################
 
-dose_points = polar_to_cart(coords, origin)
-dwell_pos_transZ = np.array([x for x in range(dwell_start, dwell_end + 1)])/10 # dividing by 10 to convert mm --> cm
+#dose_points = polar_to_cart(coords, origin)
+dose_points = np.load(dose_file)
+#dwell_pos_transZ = np.array([x for x in range(dwell_start, dwell_end + 1)])/10 # dividing by 10 to convert mm --> cm
+dwell_pos_transZ = np.array([x for x in np.arange(dwell_start, dwell_end + 1, spacing)])/10
+#print(dwell_pos_transZ) # debugging
 
 ## Extract output files ##
 # Note that output file array is sorted (lowest dwell pos) --> (highest dwell pos)
@@ -52,6 +65,7 @@ output_files = np.array(os.listdir(output_location))
 indices = []
 for s in output_files:
 	s = os.path.splitext(s)[0] # remove file extension
+	s = os.path.splitext(s)[0] ## repeated command to remove .csv for files with .csv.npy extension (will clean up later) ##
 	c = int(s.split("_")[1]) # extract dwell position index from file name
 	indices.append(c)
 arg_sorted = np.argsort(np.array(indices))

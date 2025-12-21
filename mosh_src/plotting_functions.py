@@ -38,6 +38,25 @@ def generate_plane(file: str, const_plane: int, const_axis: int) -> np.ndarray:
 
 	return plane
 
+def generate_plane_from_volume(volume: np.ndarray, const_plane: int, const_axis: int) -> np.ndarray:
+	"""
+	Extracts a two dimensional plane from a three dimensional numpy tensor. Of note, identical output to
+	generate_plane above, but takes as input a numpy array instead of a CSV file (to save time when calling
+	generate_plane inside nested for loops).
+
+	Parameters:
+		- volume: np.ndarray - numpy array with columns (x, y, z, energy, std_dev)
+		- const_plane: int - specifies the voxel that is held constant when extracting plane
+		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
+
+	Returns:
+		- numpy array with columns (x, y, energy, std_dev)
+	"""
+	plane = volume[volume[:,const_axis] == const_plane]
+	plane = np.delete(plane, const_axis, 1)
+
+	return plane
+
 def combine_files(files: list, save_file: bool=True, file_name: str="combined_energy.csv") -> np.ndarray:
 	"""
 	Combines multiple output files by adding energy values assigned to each voxel.
@@ -119,35 +138,83 @@ def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
 	return polar_plane
 
 def polar_to_cart(coords: np.ndarray, origin: tuple) -> np.ndarray:
+	"""
     ## IN DEVELOPMENT ##
-    # For now, assuming Y axis is constant at Y = 0
-    # In other words, all our dosing points are assumed to be in the plane Y = 0 (for initial sims/debugging)
-    # Consider generalizing this to 3D using spherical coordinates?
-    cart = []
+    For now, assuming Y axis is constant at Y = 0
+    In other words, all our dosing points are assumed to be in the plane Y = 0 (for initial sims/debugging)
+    Consider generalizing this to 3D using spherical coordinates?
+    """
+	cart = []
     
-    for p in coords:
-        # p is a tuple = (X, Y)
-        c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
-        cart.append(c)
+	for p in coords:
+		# p is a tuple = (X, Y)
+		c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
+		cart.append(c)
 
-    return np.array(cart)
+	return np.array(cart)
 
-def extract_norm_energy(file: str, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float) -> tuple:
+def generate_points_uniform_sphere(num_points: int, origin: tuple=(0,0,0), mu: float=0, sigma: float=1, 
+	save: bool=False, save_name: str="sphere_points") -> np.ndarray:
+	"""
+	Generates a set of n = num_points points that are uniformly distributed over the surface of a unit sphere.
+	See https://mathworld.wolfram.com/SpherePointPicking.html for selection methods. This function independently 
+	samples three variables X, Y, Z from a Gaussian distribution and then appropriately normalizes to generate 
+	a unit sphere.
+	
+	#TODO: generalize to sphere of arbitrary radius.
+
+	Parameters:
+		- num_points: int - number of points to generate
+		- origin: tuple - center of sphere
+		- mu: float - mean of the Gaussian distribution from which X, Y, Z are sampled
+		- sigma: float - standard deviation of the Gaussian distribution from which X, Y, Z are sampled
+		- save: bool - flag that indicates whether output points should be saved 
+		- save_name: str - name of saved output file
+
+	Returns:
+		- Array of num_points tuples = (X, Y, Z) uniformly distributed over the surface of a unit sphere
+	"""
+	dose_points = []
+	for i in range(num_points):
+		X = np.random.normal(mu, sigma)
+		Y = np.random.normal(mu, sigma)
+		Z = np.random.normal(mu, sigma)
+
+		norm = np.sqrt([(X)**2 + (Y)**2 + (Z)**2])
+		p = ((X/norm) + origin[0], (Y/norm) + origin[1], (Z/norm) + origin[2])
+		dose_points.append(p)
+
+	if save:
+		np.save(save_name, np.array(dose_points))
+
+	return np.array(dose_points)
+
+def extract_norm_energy(file, const_plane: int, const_axis: int, norm_point: tuple, bins: int, lattice: float, input_flag: str="csv") -> tuple:
 	"""
 	Given an input voxel, extracts the energy deposited in that voxel during the TOPAS simulation.
 
 	Parameters:
-		- file: str - input csv file
+		- file: str - input csv or npy file
 		- const_plane: int - voxel that is held constant when extracting plane
 		- const_axis: int - axis to hold constant when extracting plane (0 = x, 1 = y, 2 = z)
 		- norm_point: tuple - point (in cm) at which we are extracting the energy value
 		- bins: int - number of bins from the simulation
 		- lattice: float - lattice length of the dosing grid
+		- input_flag: str - specifies whether to use generate_plane or generate_plane_from_volume when extracting normalization energy.
+			- If set to "csv", assumes input csv file and calls generate_plane
+			- If set to "array", assumes input npy file and calls generate_plane_from_volume
+			- Otherwise, throws a ValueError
 
 	Returns:
 		- Tuple specifying energy at norm_point and voxels of the point
 	"""
-	plane = generate_plane(file, const_plane, const_axis)
+	if input_flag == "csv":
+		plane = generate_plane(file, const_plane, const_axis)
+	elif input_flag == "array":
+		volume = np.load(file)
+		plane = generate_plane_from_volume(volume, const_plane, const_axis)
+	else:
+		raise ValueError("input_flag must be set to 'csv' or 'array' to run this function")
 
 	norm_point_voxel = cm_to_voxel(np.array(norm_point), bins, lattice)
 	mask = (plane[:,0] == norm_point_voxel[0]) & (plane[:,1] == norm_point_voxel[1])
@@ -465,7 +532,7 @@ def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_po
     	## of the source and setting const_axis = 2 (recall 0 = X, Y = 1, Z = 2; see def of extract_norm_energy for more detail).
     	## We then set the parameter norm_point (corresponding to the location of the source in the X, Y plane) to (X, Y) = (0, 0), 
     	## since the source is centered in the applicator.
-		source_energy, __ = extract_norm_energy(file_ext + output_files[j], source_plane, 2, (0, 0), bins, lattice)
+		source_energy, __ = extract_norm_energy(file_ext + output_files[j], source_plane, 2, (0, 0), bins, lattice, input_flag="array")
 
 	    # Step 2 - iterate over dose points, extract energy, and scale to source_energy
 		for i in range(num_dose_points):
@@ -475,7 +542,7 @@ def dose_rate_matrix(output_files: np.ndarray, dose_points: np.ndarray, dwell_po
 
 	        ## Again, holding the Z-axis as constant first
 			dose_energy, __ = extract_norm_energy(file_ext + output_files[j], dose_plane, 2, (dose_points[i][0], dose_points[i][1]), 
-				bins, lattice)
+				bins, lattice, input_flag="array")
 
 			normed_dose_energy = (dose_energy/source_energy)*source_dose_rate
 			D[i][j] = normed_dose_energy
