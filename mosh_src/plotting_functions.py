@@ -137,7 +137,7 @@ def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
 
 	return polar_plane
 
-def polar_to_cart(coords: np.ndarray, origin: tuple) -> np.ndarray:
+def polar_to_cart(coords: np.ndarray, origin: tuple, threeD_output: bool=True) -> np.ndarray:
 	"""
     ## IN DEVELOPMENT ##
     For now, assuming Y axis is constant at Y = 0
@@ -147,11 +147,42 @@ def polar_to_cart(coords: np.ndarray, origin: tuple) -> np.ndarray:
 	cart = []
     
 	for p in coords:
-		# p is a tuple = (X, Y)
-		c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
+		# p is a tuple = (r, theta)
+		if threeD_output:
+			c = (origin[0] + p[0]*np.cos(p[1]), 0, origin[1] + p[0]*np.sin(p[1]))
+		else:
+			c = (origin[0] + p[0]*np.cos(p[1]), origin[1] + p[0]*np.sin(p[1]))
 		cart.append(c)
 
 	return np.array(cart)
+
+def generate_points_uniform_circle(num_points: int, origin: tuple=(0,0)) -> np.ndarray:
+	"""
+	Generates a set of n = num_points that are uniformly distributed over the surface of a unit circle.
+	Per https://mathworld.wolfram.com/CirclePointPicking.html we can randomly sample a real number on the interval [0, 2pi].
+
+	Parameters:
+		- num_points: int - number of points to generate
+		- origin: tuple - center of circle
+
+	Returns:
+		- Array of num_points tuples = (X, Y) uniformly distributed over the surface of a unit sphere
+	"""
+	points = []
+	theta = np.random.uniform(low=0, high=2*pi, size=num_points)
+	rad = np.ones(num_points)
+
+	# construct array points = (r, theta) with theta in degrees
+	for p in zip(rad, theta):
+		points.append(p)
+	points = np.array(points)
+	# convert to degrees
+	points[:,1] = points[:,1]*(180/pi)
+
+	# convert to cartesian coordinates and shift the origin
+	cart = polar_to_cart(points, origin, threeD_output=False)
+
+	return cart
 
 def generate_points_uniform_sphere(num_points: int, origin: tuple=(0,0,0), mu: float=0, sigma: float=1, 
 	save: bool=False, save_name: str="sphere_points") -> np.ndarray:
@@ -226,7 +257,8 @@ def extract_norm_energy(file, const_plane: int, const_axis: int, norm_point: tup
 
 def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.ndarray:
 	"""
-	Normalizes energy in each voxel to a prescription dose defined at the voxel norm_point.
+	Normalizes energy and standard devition in each voxel to a prescription dose defined at the voxel norm_point.
+	Note that if a variable X is normally distributed, the variance of a*X is (a**2)*(sigma**2).
 
 	Parameters:
 		- plane: np.ndarray - numpy array specifying plane for analysis, with columns (x, y, energy, std_dev)
@@ -234,7 +266,7 @@ def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.n
 		- dose: float - desired prescription dose delivered to norm_point
 
 	Returns:
-		- numpy matrix with energy values scaled to prescription dose, all other values unchanged
+		- numpy matrix with energy values and standard deviations scaled to prescription dose, all other values unchanged
 	"""
 	# Scale energy and standard deviation values
 	plane[:,2:] = (plane[:,2:]/norm_energy)*dose
