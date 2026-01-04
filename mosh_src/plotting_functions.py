@@ -7,7 +7,7 @@ from scipy.optimize import linprog
 
 """
 Suite of functions to process data from TOPAS simulations. 
-Author: Sean Mullane, June 2023 - December 2025
+Author: Sean Mullane, June 2023 - January 2026
 
 Notes: 
 	- This file makes heavy use of Boolean indexing to efficiently extract information from numpy arrays. 
@@ -77,9 +77,16 @@ def combine_files(files: list, save_file: bool=True, file_name: str="combined_en
 		energy_storage.append(np.genfromtxt(f, delimiter=","))
 
 	combined_eng = np.zeros(np.shape(energy_storage[0]))
+	# x, y, z (indices 0 - 2)
 	combined_eng[:,0:3] = energy_storage[0][:,0:3]
 	for volume in energy_storage:
+		# energy (index 3)
 		combined_eng[:,3] += volume[:,3]
+		# standard deviation (index 4)
+		combined_eng[:,4] += volume[:,4]**2
+
+	# total_std_dev = sqrt(std_1**2 + std_2**2 + ...)
+	combined_eng[:,4] = np.sqrt(combined_eng[:,4])
 
 	if save_file:
 		np.savetxt(file_name, combined_eng, delimiter=",")
