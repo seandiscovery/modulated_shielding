@@ -1,9 +1,14 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from PIL import Image
 from math import pi
 from decimal import Decimal
 from scipy.optimize import linprog
+
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import matplotlib.patches as patches
+from matplotlib import ticker
+from matplotlib.colors import ListedColormap, Normalize
 
 """
 Suite of functions to process data from TOPAS simulations. 
@@ -121,7 +126,7 @@ def voxel_to_cm(voxels: np.ndarray, bins: int, lattice: float) -> np.ndarray:
 	"""
 	return (voxels - int(bins/2))*lattice
 
-def cart_to_polar(cart_plane: np.ndarray, origin: tuple) -> np.ndarray:
+def cart_to_polar(cart_plane: np.ndarray, origin: tuple=(0,0)) -> np.ndarray:
 	""" 
 	Transform 2D Cartesian coordinates to polar coordinates. 
 
@@ -273,12 +278,31 @@ def normalize_energy(plane: np.ndarray, norm_energy: float, dose: float) -> np.n
 		- dose: float - desired prescription dose delivered to norm_point
 
 	Returns:
-		- numpy matrix with energy values and standard deviations scaled to prescription dose, all other values unchanged
+		- Numpy matrix with energy values and standard deviations scaled to prescription dose, all other values unchanged
 	"""
 	# Scale energy and standard deviation values
 	plane[:,2:] = (plane[:,2:]/norm_energy)*dose
 
 	return plane
+
+def energy_cutoff(energy: np.ndarray, cutoff: float, replace: float) -> np.ndarray:
+	"""
+	Iterates over an array and replaces any values >= cutoff with the value replace. Helpful for normalizing
+	a set of contour plots with different maximum values.
+
+	Parameters:
+		- energy: np.ndarray - input array of any size
+		- cutoff: float - cutoff values; note that values >= cutoff will be replaced
+		- replace: replacement value
+
+	Returns:
+		- Input array energy with appropriate values replaced
+	"""
+	for i, e in np.ndenumerate(energy):
+		if e >= cutoff:
+			energy[i] = replace
+
+	return energy
 
 #### Plotting functions ####
 
@@ -436,7 +460,7 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: int, const_axis: int, rng_X: tuple, rng_Y: tuple, 
 	scale: bool=False, norm_energy: float=0.0, dose: float=0.0,
 	zero_source: bool=False, zero_region: str="circle", origin: tuple=(0,0), source_rad: float=0.0, source_rect: tuple=(0,0),
-	std_dev: bool=False) -> tuple:
+	std_dev: bool=False, std_dev_zeroed: bool=False) -> tuple:
 	"""
 	Constructs numpy arrays for use in matplotlib contour plotting functions.
 
@@ -463,6 +487,7 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 	Parameters - optional - standard deviation
 		- std_dev: bool - if True, calculates standard dev for each voxel
+		- std_dev_zeroed: bool - if True, sets std_dev = 0 in same region as zeroed energy for plotting convenience
 
 	Returns:
 		- Tuple (X, Y, heights, std_dev), where
@@ -500,11 +525,15 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 
 		if zero_region == "circle": 
 			# Convert Cartesian --> polar
-			polar_plane = cart_to_polar(plane, origin)
+			polar_plane = cart_to_polar(plane, origin=origin)
 
 			# Extract values with r < source_rad and set energies to zero
 			polar_mask = polar_plane[:,0] <= source_rad
 			plane[:,2][polar_mask] *= 0 # recall that plane has columns (x, y, energy, std_dev)
+
+			# Zero std_dev
+			if std_dev_zeroed:
+				plane[:,3][polar_mask] *= 0
 
 		if zero_region == "rectangle":
 			cart_mask_x = (plane[:,0] <= (origin[0] + source_rect[0]/2)) & (plane[:,0] > (origin[0] - source_rect[0]/2))
@@ -512,6 +541,10 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 			total_cart_mask = cart_mask_x & cart_mask_y
 
 			plane[:,2][total_cart_mask] *= 0
+
+			# Zero std_dev
+			if std_dev_zeroed:
+				plane[:,3][total_cart_mask] *= 0
 	
 	# Reshape the energy column of plane to a format compatible with the matplotlib countour function
 	height_values = np.reshape(plane[:,2], bins)[mask_X][:,mask_Y]
@@ -519,10 +552,63 @@ def contour_energy(file: str, bins: tuple, dose_grid_half: float, const_plane: i
 	# Extract standard dev values if necessary
 	std_dev_values = None
 	if std_dev:
-		std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
+		#std_dev_values = np.transpose(np.reshape(plane[:,3], bins))[mask_Y][:,mask_X]
+		# trying this without the transposition, as it appears that std_dev values are rotated from plotting
+		std_dev_values = np.reshape(plane[:,3], bins)[mask_Y][:,mask_X]
 
 	# Note that we use Boolean masks mask_X and mask_Y defined above to extract X- and Y-axes
 	return (X[mask_X], Y[mask_Y], height_values, std_dev_values)
+
+def generate_contour_plot(X: np.ndarray, Y: np.ndarray, energy: np.ndarray, x_label: str, y_label: str, title: str, cbar_label: str, 
+	app: bool=True, app_rad: float=0.3, channels: bool=True, channel_config: list=[1,1,1,1,1,1], 
+	roi_rad: float=0, roi_coord: tuple=(0,0), norm_point: tuple=(0,0)) -> tuple:
+	"""
+	TBD
+	1 = True --> rod inserted
+	0 = False --> rod removed
+	"""
+	
+	Xv, Yv = np.meshgrid(X, Y, indexing='ij')
+	fig, ax = plt.subplots()
+
+	# Draw contour plot
+	contour = ax.contourf(Xv, Yv, energy, locator=ticker.LinearLocator(), norm="linear", cmap="rainbow")
+	cbar = fig.colorbar(contour, label=cbar_label)
+
+	# Draw applicator
+	if app:
+		app = plt.Circle((0,0), radius=app_rad, edgecolor="orange", fill=False)
+		ax.add_patch(app)
+
+	# Draw roi
+	if roi_rad > 0:
+		roi = plt.Circle(roi_coord, radius=roi_rad, edgecolor="black", linestyle="--", fill=False)
+		ax.add_patch(roi)
+
+	# Draw shielding channels
+	if channels:
+		config = np.array(channel_config).astype(bool)
+		channel_coords = [(0, 0.18), (0.156, 0.09), (0.156, -0.09), (0, -0.18), (-0.156, -0.09), (-0.156, 0.09)]
+		channel_rad = 0.08
+
+		for coord, rod in zip(channel_coords, config):
+			channel = plt.Circle(coord, radius=channel_rad, edgecolor="white", facecolor="white", fill=rod)
+			ax.add_patch(channel)
+
+	# Label dose point at center of ROI
+	if (norm_point[0] != 0) or (norm_point[1] != 0):
+		ax.scatter(norm_point[0], norm_point[1], color="green", marker="x")
+
+	# Label source
+	ax.scatter(0, 0, color="red", marker="o")
+
+	# Axis labels
+	ax.set_title(title)
+	ax.set_xlabel(x_label)
+	ax.set_ylabel(y_label)
+	ax.set_aspect('equal')
+
+	return (X, Y, energy)
 
 #### Optimization functions ####
 
