@@ -304,6 +304,27 @@ def energy_cutoff(energy: np.ndarray, cutoff: float, replace: float) -> np.ndarr
 
 	return energy
 
+def compute_cov(std_dev: np.ndarray, energy: np.ndarray, num_Hx: float, scale: float=1.0, percent: float=100, cutoff: float=0) -> np.ndarray:
+	"""
+	Computes coefficient of variation = sigma/E given an array of standard deviation values and energy values.
+	"""
+
+	cov = np.empty(np.shape(std_dev))
+	for index, sigma in np.ndenumerate(std_dev):
+		if energy[index] == 0:
+			cov[index] = 0
+		else:
+			value = np.sqrt(num_Hx)*(sigma/energy[index])*(percent/scale)
+			if cutoff > 0:
+				if value > cutoff:
+					cov[index] = 0
+				else:
+					cov[index] = value
+			else:
+				cov[index] = value
+
+	return cov
+
 #### Plotting functions ####
 
 def energy_along_theta(file: str, theta: float, bins: tuple, dose_grid_half: float, z_slice: int, err: float=0.001, 
